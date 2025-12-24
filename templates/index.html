@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+
+{% block title %}Accueil - SignalAlert{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="hero" id="home">
+    <div class="container hero-container">
+        <div class="hero-content">
+            <h1>Plateforme communautaire de signalements</h1>
+            <p>Notre mission : vous aider à retrouver ce qui a été perdu, réunir ce qui a été séparé, et lutter contre les vols grâce à la puissance de la communauté.</p>
+            
+            <div class="hero-actions">
+                <a href="{{ url_for('signalements') }}" class="btn btn-primary btn-large">
+                    <i class="fas fa-search"></i> Parcourir les signalements
+                </a>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('nouveau_signalement') }}" class="btn btn-secondary btn-large">
+                    <i class="fas fa-plus-circle"></i> Nouveau signalement
+                </a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-secondary btn-large">
+                    <i class="fas fa-user-plus"></i> S'inscrire gratuitement
+                </a>
+                {% endif %}
+            </div>
+            
+            <div class="hero-stats">
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.total_signalements }}</div>
+                    <div class="stat-label">Signalements</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.found_items }}</div>
+                    <div class="stat-label">Retrouvés</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ stats.total_users }}</div>
+                    <div class="stat-label">Utilisateurs</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="hero-image">
+            <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Communauté d'entraide">
+        </div>
+    </div>
+</section>
+
+<!-- Categories Section -->
+<section class="section" id="categories">
+    <div class="container">
+        <div class="section-title">
+            <h2>Nos catégories de signalements</h2>
+            <p>Nous couvrons trois types principaux de signalements pour répondre à différents besoins de la communauté.</p>
+        </div>
+        
+        <div class="categories-grid">
+            <!-- Objets perdus -->
+            <div class="category-card card lost">
+                <div class="category-icon">
+                    <i class="fas fa-key"></i>
+                </div>
+                <h3>Objets perdus</h3>
+                <p>Vous avez perdu un objet personnel ? Signalez-le ici pour augmenter vos chances de le retrouver grâce à notre communauté.</p>
+                <div class="category-stats">
+                    <div class="stat-number">{{ stats_by_category.lost if stats_by_category else 0 }}</div>
+                    <div class="stat-label">Signalements actifs</div>
+                </div>
+                <a href="{{ url_for('signalements') }}?type=lost" class="btn btn-warning btn-block">
+                    <i class="fas fa-search"></i> Parcourir
+                </a>
+            </div>
+            
+            <!-- Personnes disparues -->
+            <div class="category-card card missing">
+                <div class="category-icon">
+                    <i class="fas fa-user-friends"></i>
+                </div>
+                <h3>Personnes disparues</h3>
+                <p>Une personne de votre entourage a disparu ? Signalez-la rapidement pour mobiliser un maximum de personnes dans les recherches.</p>
+                <div class="category-stats">
+                    <div class="stat-number">{{ stats_by_category.missing if stats_by_category else 0 }}</div>
+                    <div class="stat-label">Signalements actifs</div>
+                </div>
+                <a href="{{ url_for('signalements') }}?type=missing" class="btn btn-danger btn-block">
+                    <i class="fas fa-search"></i> Parcourir
+                </a>
+            </div>
+            
+            <!-- Choses volées -->
+            <div class="category-card card stolen">
+                <div class="category-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <h3>Choses volées</h3>
+                <p>Vous avez été victime d'un vol ? Déclarez-le ici pour alerter la communauté et empêcher la revente de vos biens.</p>
+                <div class="category-stats">
+                    <div class="stat-number">{{ stats_by_category.stolen if stats_by_category else 0 }}</div>
+                    <div class="stat-label">Signalements actifs</div>
+                </div>
+                <a href="{{ url_for('signalements') }}?type=stolen" class="btn btn-primary btn-block">
+                    <i class="fas fa-search"></i> Parcourir
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How It Works Section -->
+<section class="section how-it-works" id="how-it-works">
+    <div class="container">
+        <div class="section-title">
+            <h2>Comment ça marche</h2>
+            <p>Notre plateforme est simple d'utilisation. Suivez ces étapes pour signaler ou rechercher un objet, une personne ou un bien volé.</p>
+        </div>
+        
+        <div class="steps-container">
+            <div class="step">
+                <div class="step-number">1</div>
+                <h3>Créez un compte</h3>
+                <p>Inscrivez-vous gratuitement pour accéder à toutes les fonctionnalités de la plateforme.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">2</div>
+                <h3>Signalez ou recherchez</h3>
+                <p>Créez un signalement détaillé ou parcourez les annonces existantes pour aider les autres.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">3</div>
+                <h3>Restez informé</h3>
+                <p>Recevez des notifications en cas de correspondance ou d'actualisation concernant vos signalements.</p>
+            </div>
+            
+            <div class="step">
+                <div class="step-number">4</div>
+                <h3>Contribuez à la communauté</h3>
+                <p>Partagez les signalements sur vos réseaux et aidez à résoudre les affaires.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Reports Section -->
+<section class="section" id="reports">
+    <div class="container">
+        <div class="section-title">
+            <h2>Signalements récents</h2>
+            <p>Consultez les dernières annonces publiées par notre communauté.</p>
+        </div>
+        
+        <div class="reports-grid">
+            {% for signalement in signalements %}
+            <div class="report-card card">
+                {% if signalement.image_url %}
+                <img src="/static/uploads/images/{{ signalement.image_url }}" alt="{{ signalement.title }}" class="card-image">
+                {% else %}
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80" alt="{{ signalement.title }}" class="card-image">
+                {% endif %}
+                
+                <div class="card-content">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <span class="badge badge-{{ signalement.type }}">
+                            {% if signalement.type == 'lost' %}Objet perdu
+                            {% elif signalement.type == 'missing' %}Personne disparue
+                            {% else %}Chose volée{% endif %}
+                        </span>
+                    </div>
+                    
+                    <h3>{{ signalement.title }}</h3>
+                    
+                    <div class="card-meta">
+                        <span><i class="fas fa-map-marker-alt"></i> {{ signalement.location }}</span>
+                        <span><i class="far fa-calendar"></i> {{ signalement.date.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                    
+                    <p class="card-description">{{ signalement.description[:150] }}...</p>
+                    
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: var(--dark-color);">{{ signalement.category or 'Non spécifié' }}</span>
+                        <a href="{{ url_for('signalement_detail', id=signalement.id) }}" class="btn btn-primary">
+                            <i class="fas fa-eye"></i> Voir détails
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% else %}
+            <div class="no-results" style="grid-column: 1 / -1; text-align: center; padding: 3rem;">
+                <i class="fas fa-inbox fa-3x" style="color: var(--gray-color); margin-bottom: 1rem;"></i>
+                <h3>Aucun signalement récent</h3>
+                <p>Soyez le premier à créer un signalement !</p>
+                {% if current_user.is_authenticated %}
+                <a href="{{ url_for('nouveau_signalement') }}" class="btn btn-primary" style="margin-top: 1rem;">
+                    Créer un signalement
+                </a>
+                {% else %}
+                <a href="{{ url_for('register') }}" class="btn btn-primary" style="margin-top: 1rem;">
+                    S'inscrire pour créer un signalement
+                </a>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="text-align: center; margin-top: var(--spacing-xl);">
+            <a href="{{ url_for('signalements') }}" class="btn btn-outline">
+                <i class="fas fa-list"></i> Voir tous les signalements
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Mettre à jour les statistiques en temps réel
+    async function updateStats() {
+        try {
+            const response = await fetch('/api/stats');
+            const data = await response.json();
+            
+            // Mettre à jour les éléments du DOM
+            const statElements = document.querySelectorAll('.hero-stats .stat-number');
+            if (statElements.length >= 3) {
+                statElements[0].textContent = data.total_signalements;
+                statElements[1].textContent = data.found_items;
+                statElements[2].textContent = data.total_users;
+            }
+        } catch (error) {
+            console.error('Erreur mise à jour stats:', error);
+        }
+    }
+    
+    // Mettre à jour toutes les 30 secondes
+    setInterval(updateStats, 30000);
+});
+</script>
+{% endblock %}

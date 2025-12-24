@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Page non trouvée - SignalAlert{% endblock %}
+
+{% block content %}
+<div class="container" style="text-align: center; padding: 100px 0;">
+    <h1 style="font-size: 5rem; color: var(--primary-color);">404</h1>
+    <h2>Page non trouvée</h2>
+    <p style="margin: 20px 0 40px; color: var(--gray-color);">
+        La page que vous recherchez n'existe pas ou a été déplacée.
+    </p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-home"></i> Retour à l'accueil
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block title %}Erreur serveur - SignalAlert{% endblock %}
+
+{% block content %}
+<div class="container" style="text-align: center; padding: 100px 0;">
+    <h1 style="font-size: 5rem; color: var(--danger-color);">500</h1>
+    <h2>Erreur interne du serveur</h2>
+    <p style="margin: 20px 0 40px; color: var(--gray-color);">
+        Une erreur est survenue. Notre équipe technique a été notifiée.
+    </p>
+    <a href="{{ url_for('index') }}" class="btn btn-primary">
+        <i class="fas fa-home"></i> Retour à l'accueil
+    </a>
+</div>
+{% endblock %}

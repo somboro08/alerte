@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SignalAlert{% endblock %}</title>
+    
+    <!-- Police Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@300..700&family=Elms+Sans:ital,wght@0,100..900;1,100..900&family=Oxanium:wght@200..800&family=Roboto:wght@100..900&family=Tilt+Neon&family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap" rel="stylesheet">
+    <!-- Icônes Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Style principal -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    {% block head_extra %}{% endblock %}
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="{{ url_for('index') }}" class="logo">
+                <i class="fas fa-hands-helping logo-icon"></i>
+                Signal<span>Alert</span>
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav class="main-nav" id="mainNav">
+                <ul class="nav-links">
+                    <li><a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Accueil</a></li>
+                    <li><a href="{{ url_for('signalements') }}" class="{% if request.endpoint == 'signalements' %}active{% endif %}">Signalements</a></li>
+                    
+                    {% if current_user.is_authenticated %}
+                    <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Tableau de bord</a></li>
+                    <li><a href="{{ url_for('nouveau_signalement') }}" class="{% if request.endpoint == 'nouveau_signalement' %}active{% endif %}">Nouveau</a></li>
+                    {% endif %}
+                    
+                    <li><a href="#about">À propos</a></li>
+                </ul>
+                
+                <div class="user-actions">
+                    {% if current_user.is_authenticated %}
+                    <div class="user-dropdown">
+                        <button class="user-btn">
+                            <i class="fas fa-user-circle"></i>
+                            <span>{{ current_user.username }}</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu">
+                            <a href="{{ url_for('dashboard') }}" class="dropdown-item">
+                                <i class="fas fa-tachometer-alt"></i> Tableau de bord
+                            </a>
+                            <a href="{{ url_for('profile') }}" class="dropdown-item">
+                                <i class="fas fa-user"></i> Mon profil
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('logout') }}" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i> Déconnexion
+                            </a>
+                        </div>
+                    </div>
+                    {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline">
+                        <i class="fas fa-sign-in-alt"></i> Connexion
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Inscription
+                    </a>
+                    {% endif %}
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Messages flash -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        {{ message }}
+                        <button class="close-alert">&times;</button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Contenu principal -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer id="about">
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>SignalAlert</h3>
+                    <p>Plateforme communautaire de signalements pour objets perdus, personnes disparues et choses volées. Notre mission est d'aider à retrouver ce qui a été perdu grâce à la force de la communauté.</p>
+                    <div class="social-links">
+                        <a href="#"><i class="fab fa-facebook"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Liens rapides</h3>
+                    <ul>
+                        <li><a href="{{ url_for('index') }}">Accueil</a></li>
+                        <li><a href="{{ url_for('signalements') }}">Signalements</a></li>
+                        <li><a href="#how-it-works">Comment ça marche</a></li>
+                        <li><a href="#about">À propos</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Ressources</h3>
+                    <ul>
+                        <li><a href="#">Conseils de prévention</a></li>
+                        <li><a href="#">Guide des bonnes pratiques</a></li>
+                        <li><a href="#">Témoignages</a></li>
+                        <li><a href="#">Partenaires</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt"></i> Carré 123, Cotonou, Bénin</li>
+                        <li><i class="fas fa-phone"></i> +229 97 00 00 00</li>
+                        <li><i class="fas fa-envelope"></i> contact@signalalert.bj</li>
+                    </ul>
+                    <h3 style="margin-top: var(--spacing-md);">Numéros d'urgence</h3>
+                    <ul>
+                        <li><strong>Police :</strong> 117</li>
+                        <li><strong>Pompiers :</strong> 118</li>
+                        <li><strong>SAMU :</strong> 112</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2023 SignalAlert. Tous droits réservés. | 
+                   <a href="#">Politique de confidentialité</a> | 
+                   <a href="#">Mentions légales</a> | 
+                   <a href="#">Conditions d'utilisation</a>
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

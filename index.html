@@ -1,0 +1,1812 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalAlert - Plateforme de Signalements</title>
+    <!-- Police Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <!-- Icônes Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Style principal -->
+    <style>
+        :root {
+            /* Palette de couleurs principale */
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --primary-light: #3b82f6;
+            --secondary-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --dark-color: #1f2937;
+            --light-color: #f9fafb;
+            --gray-color: #6b7280;
+            --gray-light: #e5e7eb;
+            --white: #ffffff;
+            
+            /* Typographie */
+            --font-heading: 'Poppins', sans-serif;
+            --font-body: 'Open Sans', sans-serif;
+            
+            /* Espacements */
+            --spacing-xs: 0.5rem;
+            --spacing-sm: 1rem;
+            --spacing-md: 1.5rem;
+            --spacing-lg: 2rem;
+            --spacing-xl: 3rem;
+            --spacing-xxl: 4rem;
+            
+            /* Bordures */
+            --border-radius: 8px;
+            --border-radius-lg: 12px;
+            --border-radius-xl: 20px;
+            
+            /* Ombres */
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 25px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 40px rgba(0,0,0,0.15);
+            
+            /* Transitions */
+            --transition-fast: 0.2s ease;
+            --transition-normal: 0.3s ease;
+            --transition-slow: 0.5s ease;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html {
+            scroll-behavior: smooth;
+        }
+        
+        body {
+            font-family: var(--font-body);
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--dark-color);
+            background-color: var(--light-color);
+            overflow-x: hidden;
+        }
+        
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-heading);
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+        }
+        
+        h2 {
+            font-size: 2rem;
+        }
+        
+        h3 {
+            font-size: 1.5rem;
+        }
+        
+        p {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: color var(--transition-fast);
+        }
+        
+        a:hover {
+            color: var(--primary-dark);
+        }
+        
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 0 var(--spacing-md);
+        }
+        
+        .section {
+            padding: var(--spacing-xxl) 0;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .section-title h2 {
+            color: var(--dark-color);
+            position: relative;
+            display: inline-block;
+            padding-bottom: var(--spacing-sm);
+        }
+        
+        .section-title h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 70px;
+            height: 4px;
+            background: var(--primary-color);
+            border-radius: 2px;
+        }
+        
+        .section-title p {
+            max-width: 700px;
+            margin: 0 auto;
+            color: var(--gray-color);
+        }
+        
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-xs);
+            padding: 0.75rem 1.75rem;
+            font-family: var(--font-heading);
+            font-weight: 600;
+            font-size: 1rem;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all var(--transition-normal);
+            text-decoration: none;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            color: var(--white);
+        }
+        
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: var(--white);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #0ea271;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            color: var(--white);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: var(--primary-color);
+            border: 2px solid var(--primary-color);
+        }
+        
+        .btn-outline:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .btn-danger {
+            background-color: var(--danger-color);
+            color: var(--white);
+        }
+        
+        .btn-danger:hover {
+            background-color: #dc2626;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            color: var(--white);
+        }
+        
+        .btn-warning {
+            background-color: var(--warning-color);
+            color: var(--white);
+        }
+        
+        .btn-warning:hover {
+            background-color: #d97706;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            color: var(--white);
+        }
+        
+        .btn-large {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .btn-block {
+            width: 100%;
+        }
+        
+        .card {
+            background: var(--white);
+            border-radius: var(--border-radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-md);
+            transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .badge-lost {
+            background-color: rgba(245, 158, 11, 0.15);
+            color: var(--warning-color);
+        }
+        
+        .badge-missing {
+            background-color: rgba(239, 68, 68, 0.15);
+            color: var(--danger-color);
+        }
+        
+        .badge-stolen {
+            background-color: rgba(37, 99, 235, 0.15);
+            color: var(--primary-color);
+        }
+        
+        .badge-found {
+            background-color: rgba(16, 185, 129, 0.15);
+            color: var(--secondary-color);
+        }
+        
+        /* Header Styles */
+        header {
+            background-color: var(--white);
+            box-shadow: var(--shadow-sm);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md) 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+            font-family: var(--font-heading);
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+        }
+        
+        .logo-icon {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+        }
+        
+        .logo span {
+            color: var(--primary-color);
+        }
+        
+        .main-nav {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-lg);
+        }
+        
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: var(--spacing-md);
+        }
+        
+        .nav-links a {
+            color: var(--dark-color);
+            font-weight: 500;
+            font-family: var(--font-heading);
+            padding: 0.5rem 0;
+            position: relative;
+        }
+        
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: var(--primary-color);
+            transition: width var(--transition-normal);
+        }
+        
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+        
+        .nav-links a.active {
+            color: var(--primary-color);
+        }
+        
+        .user-actions {
+            display: flex;
+            align-items: center;
+            gap: var(--spacing-sm);
+        }
+        
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--dark-color);
+            cursor: pointer;
+        }
+        
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.9) 0%, rgba(29, 78, 216, 0.9) 100%), url('https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80');
+            background-size: cover;
+            background-position: center;
+            color: var(--white);
+            padding: var(--spacing-xxl) 0;
+        }
+        
+        .hero-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: var(--spacing-xl);
+        }
+        
+        .hero-content {
+            flex: 1;
+        }
+        
+        .hero-content h1 {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+            color: var(--white);
+        }
+        
+        .hero-content p {
+            font-size: 1.1rem;
+            margin-bottom: var(--spacing-lg);
+            opacity: 0.9;
+        }
+        
+        .hero-actions {
+            display: flex;
+            gap: var(--spacing-md);
+            flex-wrap: wrap;
+        }
+        
+        .hero-stats {
+            display: flex;
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-lg);
+        }
+        
+        .stat-item {
+            text-align: center;
+        }
+        
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stat-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .hero-image {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .hero-image img {
+            max-width: 100%;
+            border-radius: var(--border-radius-xl);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        /* Categories Section */
+        .categories-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .category-card {
+            text-align: center;
+            padding: var(--spacing-xl);
+            border-top: 5px solid;
+        }
+        
+        .category-card.lost {
+            border-color: var(--warning-color);
+        }
+        
+        .category-card.missing {
+            border-color: var(--danger-color);
+        }
+        
+        .category-card.stolen {
+            border-color: var(--primary-color);
+        }
+        
+        .category-icon {
+            font-size: 3rem;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .category-card.lost .category-icon {
+            color: var(--warning-color);
+        }
+        
+        .category-card.missing .category-icon {
+            color: var(--danger-color);
+        }
+        
+        .category-card.stolen .category-icon {
+            color: var(--primary-color);
+        }
+        
+        /* How It Works Section */
+        .how-it-works {
+            background-color: var(--white);
+        }
+        
+        .steps-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-xl);
+            margin-top: var(--spacing-xl);
+        }
+        
+        .step {
+            text-align: center;
+            position: relative;
+        }
+        
+        .step-number {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 60px;
+            height: 60px;
+            background-color: var(--primary-color);
+            color: var(--white);
+            font-size: 1.5rem;
+            font-weight: 700;
+            border-radius: 50%;
+            margin: 0 auto var(--spacing-md);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .step h3 {
+            margin-bottom: var(--spacing-sm);
+        }
+        
+        /* Recent Reports Section */
+        .reports-filters {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .filter-btn {
+            padding: 0.5rem 1.5rem;
+            background-color: var(--gray-light);
+            border: none;
+            border-radius: 50px;
+            font-family: var(--font-heading);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+        }
+        
+        .filter-btn.active,
+        .filter-btn:hover {
+            background-color: var(--primary-color);
+            color: var(--white);
+        }
+        
+        .reports-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: var(--spacing-lg);
+        }
+        
+        .report-card .card-image {
+            height: 200px;
+            width: 100%;
+            object-fit: cover;
+        }
+        
+        .report-card .card-content {
+            padding: var(--spacing-md);
+        }
+        
+        .report-card .card-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: var(--spacing-sm);
+            font-size: 0.9rem;
+            color: var(--gray-color);
+        }
+        
+        .report-card .card-meta i {
+            margin-right: 0.25rem;
+        }
+        
+        .report-card h3 {
+            margin-bottom: var(--spacing-sm);
+            font-size: 1.25rem;
+        }
+        
+        .report-card .card-description {
+            color: var(--gray-color);
+            margin-bottom: var(--spacing-md);
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: var(--spacing-md);
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: var(--white);
+            border-radius: var(--border-radius-lg);
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--spacing-md);
+            border-bottom: 1px solid var(--gray-light);
+        }
+        
+        .modal-header h2 {
+            margin-bottom: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--gray-color);
+        }
+        
+        .modal-body {
+            padding: var(--spacing-md);
+        }
+        
+        /* Form Styles */
+        .form-group {
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-family: var(--font-heading);
+        }
+        
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--gray-light);
+            border-radius: var(--border-radius);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: border-color var(--transition-fast);
+        }
+        
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+        
+        .form-row {
+            display: flex;
+            gap: var(--spacing-md);
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        /* Footer */
+        footer {
+            background-color: var(--dark-color);
+            color: var(--white);
+            padding-top: var(--spacing-xxl);
+        }
+        
+        .footer-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--spacing-xl);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .footer-column h3 {
+            color: var(--white);
+            font-size: 1.25rem;
+            margin-bottom: var(--spacing-md);
+        }
+        
+        .footer-column ul {
+            list-style: none;
+        }
+        
+        .footer-column ul li {
+            margin-bottom: 0.75rem;
+        }
+        
+        .footer-column a {
+            color: var(--gray-light);
+        }
+        
+        .footer-column a:hover {
+            color: var(--white);
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding: var(--spacing-lg) 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--gray-color);
+            font-size: 0.9rem;
+        }
+        
+        /* Dashboard Styles */
+        .dashboard-header {
+            background-color: var(--primary-color);
+            color: var(--white);
+            padding: var(--spacing-xl) 0;
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .dashboard-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-md);
+            margin-bottom: var(--spacing-xl);
+        }
+        
+        .dashboard-stat {
+            background-color: var(--white);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .dashboard-stat h3 {
+            font-size: 1.75rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .dashboard-stat p {
+            color: var(--gray-color);
+            margin-bottom: 0;
+        }
+        
+        /* Responsive Styles */
+        @media (max-width: 1024px) {
+            .hero-container {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .hero-content h1 {
+                font-size: 2.5rem;
+            }
+            
+            .hero-stats {
+                justify-content: center;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .main-nav {
+                position: fixed;
+                top: 80px;
+                left: 0;
+                width: 100%;
+                background-color: var(--white);
+                flex-direction: column;
+                padding: var(--spacing-lg);
+                box-shadow: var(--shadow-lg);
+                transform: translateY(-100%);
+                opacity: 0;
+                visibility: hidden;
+                transition: all var(--transition-normal);
+            }
+            
+            .main-nav.active {
+                transform: translateY(0);
+                opacity: 1;
+                visibility: visible;
+            }
+            
+            .nav-links {
+                flex-direction: column;
+                width: 100%;
+                text-align: center;
+            }
+            
+            .user-actions {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            h2 {
+                font-size: 1.75rem;
+            }
+            
+            .section {
+                padding: var(--spacing-xl) 0;
+            }
+            
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+            
+            .reports-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .hero-actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .hero-stats {
+                flex-direction: column;
+                gap: var(--spacing-md);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container header-container">
+            <a href="#" class="logo">
+                <i class="fas fa-hands-helping logo-icon"></i>
+                Signal<span>Alert</span>
+            </a>
+            
+            <button class="mobile-menu-btn" id="mobileMenuBtn">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <nav class="main-nav" id="mainNav">
+                <ul class="nav-links">
+                    <li><a href="#home" class="active">Accueil</a></li>
+                    <li><a href="#categories">Catégories</a></li>
+                    <li><a href="#reports">Signalements</a></li>
+                    <li><a href="#how-it-works">Comment ça marche</a></li>
+                    <li><a href="#about">À propos</a></li>
+                </ul>
+                
+                <div class="user-actions">
+                    <button class="btn btn-outline" id="loginBtn">
+                        <i class="fas fa-sign-in-alt"></i> Connexion
+                    </button>
+                    <button class="btn btn-primary" id="reportBtn">
+                        <i class="fas fa-plus-circle"></i> Nouveau signalement
+                    </button>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="container hero-container">
+            <div class="hero-content">
+                <h1>Plateforme communautaire de signalements</h1>
+                <p>Notre mission : vous aider à retrouver ce qui a été perdu, réunir ce qui a été séparé, et lutter contre les vols grâce à la puissance de la communauté.</p>
+                
+                <div class="hero-actions">
+                    <button class="btn btn-primary btn-large" id="heroReportBtn">
+                        <i class="fas fa-bullhorn"></i> Signaler un incident
+                    </button>
+                    <button class="btn btn-secondary btn-large" id="browseBtn">
+                        <i class="fas fa-search"></i> Parcourir les signalements
+                    </button>
+                </div>
+                
+                <div class="hero-stats">
+                    <div class="stat-item">
+                        <div class="stat-number" id="statsFound">1,847</div>
+                        <div class="stat-label">Objets retrouvés</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="statsResolved">562</div>
+                        <div class="stat-label">Affaires résolues</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-number" id="statsUsers">15,236</div>
+                        <div class="stat-label">Utilisateurs actifs</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="hero-image">
+                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="Communauté d'entraide">
+            </div>
+        </div>
+    </section>
+
+    <!-- Categories Section -->
+    <section class="section" id="categories">
+        <div class="container">
+            <div class="section-title">
+                <h2>Nos catégories de signalements</h2>
+                <p>Nous couvrons trois types principaux de signalements pour répondre à différents besoins de la communauté.</p>
+            </div>
+            
+            <div class="categories-grid">
+                <!-- Objets perdus -->
+                <div class="category-card card lost">
+                    <div class="category-icon">
+                        <i class="fas fa-key"></i>
+                    </div>
+                    <h3>Objets perdus</h3>
+                    <p>Vous avez perdu un objet personnel ? Signalez-le ici pour augmenter vos chances de le retrouver grâce à notre communauté.</p>
+                    <div class="category-stats">
+                        <div class="stat-number">843</div>
+                        <div class="stat-label">Signalements actifs</div>
+                    </div>
+                    <button class="btn btn-warning btn-block category-btn" data-category="lost">
+                        <i class="fas fa-search"></i> Parcourir
+                    </button>
+                </div>
+                
+                <!-- Personnes disparues -->
+                <div class="category-card card missing">
+                    <div class="category-icon">
+                        <i class="fas fa-user-friends"></i>
+                    </div>
+                    <h3>Personnes disparues</h3>
+                    <p>Une personne de votre entourage a disparu ? Signalez-la rapidement pour mobiliser un maximum de personnes dans les recherches.</p>
+                    <div class="category-stats">
+                        <div class="stat-number">47</div>
+                        <div class="stat-label">Signalements actifs</div>
+                    </div>
+                    <button class="btn btn-danger btn-block category-btn" data-category="missing">
+                        <i class="fas fa-search"></i> Parcourir
+                    </button>
+                </div>
+                
+                <!-- Choses volées -->
+                <div class="category-card card stolen">
+                    <div class="category-icon">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <h3>Choses volées</h3>
+                    <p>Vous avez été victime d'un vol ? Déclarez-le ici pour alerter la communauté et empêcher la revente de vos biens.</p>
+                    <div class="category-stats">
+                        <div class="stat-number">329</div>
+                        <div class="stat-label">Signalements actifs</div>
+                    </div>
+                    <button class="btn btn-primary btn-block category-btn" data-category="stolen">
+                        <i class="fas fa-search"></i> Parcourir
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="section how-it-works" id="how-it-works">
+        <div class="container">
+            <div class="section-title">
+                <h2>Comment ça marche</h2>
+                <p>Notre plateforme est simple d'utilisation. Suivez ces étapes pour signaler ou rechercher un objet, une personne ou un bien volé.</p>
+            </div>
+            
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Créez un compte</h3>
+                    <p>Inscrivez-vous gratuitement pour accéder à toutes les fonctionnalités de la plateforme.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Signalez ou recherchez</h3>
+                    <p>Créez un signalement détaillé ou parcourez les annonces existantes pour aider les autres.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Restez informé</h3>
+                    <p>Recevez des notifications en cas de correspondance ou d'actualisation concernant vos signalements.</p>
+                </div>
+                
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <h3>Contribuez à la communauté</h3>
+                    <p>Partagez les signalements sur vos réseaux et aidez à résoudre les affaires.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Recent Reports Section -->
+    <section class="section" id="reports">
+        <div class="container">
+            <div class="section-title">
+                <h2>Signalements récents</h2>
+                <p>Consultez les dernières annonces publiées par notre communauté. Vous pouvez filtrer par catégorie.</p>
+            </div>
+            
+            <div class="reports-filters">
+                <button class="filter-btn active" data-filter="all">Tous les signalements</button>
+                <button class="filter-btn" data-filter="lost">Objets perdus</button>
+                <button class="filter-btn" data-filter="missing">Personnes disparues</button>
+                <button class="filter-btn" data-filter="stolen">Choses volées</button>
+                <button class="filter-btn" data-filter="found">Retrouvés/Résolus</button>
+            </div>
+            
+            <div class="reports-grid" id="reportsContainer">
+                <!-- Les signalements seront chargés ici par JavaScript -->
+            </div>
+            
+            <div style="text-align: center; margin-top: var(--spacing-xl);">
+                <button class="btn btn-outline" id="loadMoreBtn">
+                    <i class="fas fa-plus"></i> Charger plus de signalements
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal pour le formulaire de signalement -->
+    <div class="modal" id="reportModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Nouveau signalement</h2>
+                <button class="modal-close" id="closeReportModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="reportForm">
+                    <div class="form-group">
+                        <label class="form-label" for="reportType">Type de signalement</label>
+                        <select class="form-control" id="reportType" required>
+                            <option value="">Sélectionnez un type</option>
+                            <option value="lost">Objet perdu</option>
+                            <option value="missing">Personne disparue</option>
+                            <option value="stolen">Chose volée</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="reportTitle">Titre du signalement</label>
+                            <input type="text" class="form-control" id="reportTitle" placeholder="Ex: Montre bracelet en or perdue" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reportLocation">Lieu</label>
+                            <input type="text" class="form-control" id="reportLocation" placeholder="Ex: Paris 15e, Métro ligne 6" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="reportDate">Date de l'incident</label>
+                            <input type="date" class="form-control" id="reportDate" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="reportCategory">Catégorie</label>
+                            <select class="form-control" id="reportCategory" required>
+                                <option value="">Sélectionnez une catégorie</option>
+                                <option value="electronics">Électronique</option>
+                                <option value="documents">Documents</option>
+                                <option value="jewelry">Bijoux</option>
+                                <option value="clothing">Vêtements</option>
+                                <option value="other">Autre</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="reportDescription">Description détaillée</label>
+                        <textarea class="form-control" id="reportDescription" rows="5" placeholder="Décrivez en détail l'objet, la personne ou la chose volée. Incluez des détails distinctifs, la valeur sentimentale ou matérielle, et toute information utile pour l'identification." required></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="reportContact">Coordonnées de contact</label>
+                        <input type="text" class="form-control" id="reportContact" placeholder="Email ou téléphone (visible uniquement pour les membres vérifiés)" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Récompense proposée (optionnel)</label>
+                        <input type="text" class="form-control" id="reportReward" placeholder="Ex: 5000 CFA pour la personne qui retrouvera l'objet">
+                    </div>
+                    
+                    <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Publier le signalement
+                        </button>
+                        <button type="button" class="btn btn-outline" id="cancelReport">
+                            Annuler
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal pour connexion -->
+    <div class="modal" id="loginModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Connexion à SignalAlert</h2>
+                <button class="modal-close" id="closeLoginModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="loginEmail">Adresse email</label>
+                        <input type="email" class="form-control" id="loginEmail" placeholder="votre@email.com" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" for="loginPassword">Mot de passe</label>
+                        <input type="password" class="form-control" id="loginPassword" placeholder="Votre mot de passe" required>
+                    </div>
+                    
+                    <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <input type="checkbox" id="rememberMe">
+                            <label for="rememberMe">Se souvenir de moi</label>
+                        </div>
+                        <a href="#" style="font-size: 0.9rem;">Mot de passe oublié ?</a>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <i class="fas fa-sign-in-alt"></i> Se connecter
+                    </button>
+                </form>
+                
+                <div style="text-align: center; margin-top: var(--spacing-md);">
+                    <p>Pas encore de compte ? <a href="#" id="showRegister">S'inscrire gratuitement</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="about">
+        <div class="container">
+            <div class="footer-container">
+                <div class="footer-column">
+                    <h3>SignalAlert</h3>
+                    <p>Plateforme communautaire de signalements pour objets perdus, personnes disparues et choses volées. Notre mission est d'aider à retrouver ce qui a été perdu grâce à la force de la communauté.</p>
+                    <div class="social-links" style="display: flex; gap: var(--spacing-sm); margin-top: var(--spacing-md);">
+                        <a href="#" style="font-size: 1.25rem;"><i class="fab fa-facebook"></i></a>
+                        <a href="#" style="font-size: 1.25rem;"><i class="fab fa-twitter"></i></a>
+                        <a href="#" style="font-size: 1.25rem;"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Liens rapides</h3>
+                    <ul>
+                        <li><a href="#home">Accueil</a></li>
+                        <li><a href="#categories">Catégories</a></li>
+                        <li><a href="#reports">Signalements</a></li>
+                        <li><a href="#how-it-works">Comment ça marche</a></li>
+                        <li><a href="#about">À propos</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Ressources</h3>
+                    <ul>
+                        <li><a href="#">Conseils de prévention</a></li>
+                        <li><a href="#">Guide des bonnes pratiques</a></li>
+                        <li><a href="#">Témoignages</a></li>
+                        <li><a href="#">Partenaires</a></li>
+                        <li><a href="#">Espace presse</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-column">
+                    <h3>Contact</h3>
+                    <ul>
+                        <li><i class="fas fa-map-marker-alt" style="margin-right: 0.5rem;"></i> Carré 123, Cotonou, Bénin</li>
+                        <li><i class="fas fa-phone" style="margin-right: 0.5rem;"></i> +229 97 00 00 00</li>
+                        <li><i class="fas fa-envelope" style="margin-right: 0.5rem;"></i> contact@signalalert.bj</li>
+                    </ul>
+                    <h3 style="margin-top: var(--spacing-md);">Numéros d'urgence</h3>
+                    <ul>
+                        <li><strong>Police :</strong> 117</li>
+                        <li><strong>Pompiers :</strong> 118</li>
+                        <li><strong>SAMU :</strong> 112</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2023 SignalAlert. Tous droits réservés. | <a href="#">Politique de confidentialité</a> | <a href="#">Mentions légales</a> | <a href="#">Conditions d'utilisation</a></p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Script principal -->
+    <script>
+        // Base de données simulée de signalements
+        const reportsDatabase = [
+            {
+                id: 1,
+                type: "lost",
+                title: "Montre bracelet en or",
+                location: "Paris 15e, Métro ligne 6",
+                date: "2023-06-15",
+                category: "Bijoux",
+                description: "Montre bracelet en or perdue dans le métro ligne 6 entre Cambronne et Pasteur. Elle a une valeur sentimentale importante car c'était un cadeau d'anniversaire.",
+                contact: "jean.dupont@email.com",
+                reward: "100€",
+                status: "active",
+                image: "https://images.unsplash.com/photo-1526170375885-4d8ecf77b99f?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80"
+            },
+            {
+                id: 2,
+                type: "missing",
+                title: "Marie Dubois, 72 ans",
+                location: "Lyon 3e, Parc de la Tête d'Or",
+                date: "2023-06-12",
+                category: "Personne disparue",
+                description: "Marie Dubois, 72 ans, disparue depuis hier après-midi. Elle était habillée d'un manteau bleu et d'un pantalon gris. Souffre de légers troubles de la mémoire. Toute information est précieuse.",
+                contact: "famille.dubois@email.com",
+                reward: "",
+                status: "active",
+                image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80"
+            },
+            {
+                id: 3,
+                type: "stolen",
+                title: "Vélo de course Trek",
+                location: "Marseille 8e, Gare Saint-Charles",
+                date: "2023-06-10",
+                category: "Véhicule",
+                description: "Vélo de course Trek, modèle Domane SL 5, volé devant la gare Saint-Charles. Cadre rouge, selle noire, porte un autocollant 'I love cycling' sur le cadre. Vélo équipé d'un éclairage avant et arrière.",
+                contact: "0567123456",
+                reward: "200€",
+                status: "active",
+                image: "https://images.unsplash.com/photo-1556656793-08538906a9f8?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80"
+            },
+            {
+                id: 4,
+                type: "lost",
+                title: "Portefeuille en cuir marron",
+                location: "Toulouse, Centre commercial",
+                date: "2023-06-08",
+                category: "Documents",
+                description: "Portefeuille en cuir marron contenant carte d'identité, cartes bancaires et photos de famille. Perdu aux alentours du centre commercial.",
+                contact: "pierre.martin@email.com",
+                reward: "50€",
+                status: "found",
+                image: "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80"
+            },
+            {
+                id: 5,
+                type: "stolen",
+                title: "Ordinateur portable MacBook Pro",
+                location: "Lille, Café du Centre",
+                date: "2023-06-05",
+                category: "Électronique",
+                description: "MacBook Pro 13 pouces volé dans un café alors que je me suis absenté quelques minutes. L'ordinateur est argenté avec un sticker de licorne sur le couvercle.",
+                contact: "laura.tech@email.com",
+                reward: "300€",
+                status: "active",
+                image: "https://images.unsplash.com/photo-1496181133206-80ce9b88a853?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80"
+            },
+            {
+                id: 6,
+                type: "missing",
+                title: "Chien Berger Australien",
+                location: "Bordeaux, Parc Bordelais",
+                date: "2023-06-03",
+                category: "Animal",
+                description: "Max, berger australien de 3 ans, disparu pendant une promenade dans le parc. Il porte un collier bleu avec une médaille d'identification. Très amical mais craintif avec les inconnus.",
+                contact: "0612345678",
+                reward: "150€",
+                status: "found",
+                image: "https://images.unsplash.com/photo-1568572933382-74d440642117?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80"
+            }
+        ];
+
+        // Éléments DOM
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mainNav = document.getElementById('mainNav');
+        const reportBtn = document.getElementById('reportBtn');
+        const heroReportBtn = document.getElementById('heroReportBtn');
+        const loginBtn = document.getElementById('loginBtn');
+        const reportModal = document.getElementById('reportModal');
+        const loginModal = document.getElementById('loginModal');
+        const closeReportModal = document.getElementById('closeReportModal');
+        const closeLoginModal = document.getElementById('closeLoginModal');
+        const cancelReport = document.getElementById('cancelReport');
+        const reportForm = document.getElementById('reportForm');
+        const loginForm = document.getElementById('loginForm');
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const reportsContainer = document.getElementById('reportsContainer');
+        const loadMoreBtn = document.getElementById('loadMoreBtn');
+        const categoryButtons = document.querySelectorAll('.category-btn');
+        const browseBtn = document.getElementById('browseBtn');
+        const showRegister = document.getElementById('showRegister');
+        
+        // Variables d'état
+        let currentFilter = 'all';
+        let displayedReports = 3;
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Charger les signalements initiaux
+            loadReports();
+            
+            // Configurer la date du formulaire à aujourd'hui
+            document.getElementById('reportDate').valueAsDate = new Date();
+        });
+        
+        // Gestion du menu mobile
+        mobileMenuBtn.addEventListener('click', function() {
+            mainNav.classList.toggle('active');
+            mobileMenuBtn.innerHTML = mainNav.classList.contains('active') 
+                ? '<i class="fas fa-times"></i>' 
+                : '<i class="fas fa-bars"></i>';
+        });
+        
+        // Fermer le menu mobile en cliquant sur un lien
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', function() {
+                mainNav.classList.remove('active');
+                mobileMenuBtn.innerHTML = '<i class="fas fa-bars"></i>';
+            });
+        });
+        
+        // Gestion des modals
+        function openModal(modal) {
+            modal.classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeModal(modal) {
+            modal.classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+        
+        reportBtn.addEventListener('click', () => openModal(reportModal));
+        heroReportBtn.addEventListener('click', () => openModal(reportModal));
+        loginBtn.addEventListener('click', () => openModal(loginModal));
+        
+        closeReportModal.addEventListener('click', () => closeModal(reportModal));
+        closeLoginModal.addEventListener('click', () => closeModal(loginModal));
+        cancelReport.addEventListener('click', () => closeModal(reportModal));
+        
+        // Fermer les modals en cliquant à l'extérieur
+        window.addEventListener('click', function(e) {
+            if (e.target === reportModal) closeModal(reportModal);
+            if (e.target === loginModal) closeModal(loginModal);
+        });
+        
+        // Gestion des filtres
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Mettre à jour le bouton actif
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Mettre à jour le filtre
+                currentFilter = this.getAttribute('data-filter');
+                displayedReports = 3;
+                
+                // Recharger les signalements
+                loadReports();
+            });
+        });
+        
+        // Gestion des boutons de catégorie
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const category = this.getAttribute('data-category');
+                
+                // Mettre à jour les filtres
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                document.querySelector(`.filter-btn[data-filter="${category}"]`).classList.add('active');
+                
+                // Mettre à jour le filtre
+                currentFilter = category;
+                displayedReports = 3;
+                
+                // Recharger les signalements
+                loadReports();
+                
+                // Faire défiler jusqu'à la section des signalements
+                document.getElementById('reports').scrollIntoView({ behavior: 'smooth' });
+            });
+        });
+        
+        // Gestion du bouton "Parcourir"
+        browseBtn.addEventListener('click', function() {
+            document.getElementById('reports').scrollIntoView({ behavior: 'smooth' });
+        });
+        
+        // Gestion du bouton "Charger plus"
+        loadMoreBtn.addEventListener('click', function() {
+            displayedReports += 3;
+            loadReports();
+        });
+        
+        // Gestion du formulaire de signalement
+        reportForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Récupérer les valeurs du formulaire
+            const reportType = document.getElementById('reportType').value;
+            const title = document.getElementById('reportTitle').value;
+            const location = document.getElementById('reportLocation').value;
+            const date = document.getElementById('reportDate').value;
+            const category = document.getElementById('reportCategory').value;
+            const description = document.getElementById('reportDescription').value;
+            const contact = document.getElementById('reportContact').value;
+            const reward = document.getElementById('reportReward').value;
+            
+            // Créer un nouvel objet signalement
+            const newReport = {
+                id: reportsDatabase.length + 1,
+                type: reportType,
+                title: title,
+                location: location,
+                date: date,
+                category: category,
+                description: description,
+                contact: contact,
+                reward: reward,
+                status: "active",
+                image: getRandomImageForType(reportType)
+            };
+            
+            // Ajouter à la base de données simulée
+            reportsDatabase.unshift(newReport);
+            
+            // Réinitialiser le formulaire
+            reportForm.reset();
+            document.getElementById('reportDate').valueAsDate = new Date();
+            
+            // Fermer le modal
+            closeModal(reportModal);
+            
+            // Afficher un message de confirmation
+            alert('Votre signalement a été publié avec succès ! Il est maintenant visible par la communauté.');
+            
+            // Recharger les signalements
+            currentFilter = 'all';
+            filterButtons.forEach(btn => btn.classList.remove('active'));
+            document.querySelector('.filter-btn[data-filter="all"]').classList.add('active');
+            displayedReports = 3;
+            loadReports();
+        });
+        
+        // Gestion du formulaire de connexion
+        loginForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Simulation de connexion
+            if (email && password) {
+                alert(`Connexion réussie avec l'adresse: ${email}`);
+                closeModal(loginModal);
+                loginBtn.innerHTML = '<i class="fas fa-user"></i> Mon compte';
+                loginBtn.classList.remove('btn-outline');
+                loginBtn.classList.add('btn-secondary');
+                
+                // Mettre à jour l'action de connexion pour ouvrir un dashboard
+                loginBtn.removeEventListener('click', () => openModal(loginModal));
+                loginBtn.addEventListener('click', function() {
+                    alert('Ouverture du tableau de bord utilisateur (simulation)');
+                });
+            } else {
+                alert('Veuillez remplir tous les champs');
+            }
+        });
+        
+        // Gestion du lien "S'inscrire"
+        showRegister.addEventListener('click', function(e) {
+            e.preventDefault();
+            closeModal(loginModal);
+            alert('Ouverture du formulaire d\'inscription (simulation)');
+        });
+        
+        // Fonction pour charger les signalements
+        function loadReports() {
+            // Filtrer les signalements selon le filtre actif
+            let filteredReports = reportsDatabase;
+            
+            if (currentFilter !== 'all') {
+                if (currentFilter === 'found') {
+                    filteredReports = reportsDatabase.filter(report => report.status === 'found');
+                } else {
+                    filteredReports = reportsDatabase.filter(report => report.type === currentFilter);
+                }
+            }
+            
+            // Limiter le nombre de signalements affichés
+            const reportsToShow = filteredReports.slice(0, displayedReports);
+            
+            // Vider le conteneur
+            reportsContainer.innerHTML = '';
+            
+            // Générer les cartes de signalement
+            reportsToShow.forEach(report => {
+                const reportCard = createReportCard(report);
+                reportsContainer.appendChild(reportCard);
+            });
+            
+            // Afficher/masquer le bouton "Charger plus"
+            if (displayedReports >= filteredReports.length) {
+                loadMoreBtn.style.display = 'none';
+            } else {
+                loadMoreBtn.style.display = 'inline-flex';
+            }
+        }
+        
+        // Fonction pour créer une carte de signalement
+        function createReportCard(report) {
+            const card = document.createElement('div');
+            card.className = 'report-card card';
+            card.setAttribute('data-category', report.type);
+            card.setAttribute('data-status', report.status);
+            
+            // Déterminer la classe de badge selon le type
+            let badgeClass = '';
+            let badgeText = '';
+            
+            switch(report.type) {
+                case 'lost':
+                    badgeClass = 'badge-lost';
+                    badgeText = 'Objet perdu';
+                    break;
+                case 'missing':
+                    badgeClass = 'badge-missing';
+                    badgeText = 'Personne disparue';
+                    break;
+                case 'stolen':
+                    badgeClass = 'badge-stolen';
+                    badgeText = 'Chose volée';
+                    break;
+            }
+            
+            // Ajouter un badge supplémentaire si retrouvé
+            const statusBadge = report.status === 'found' ? '<span class="badge badge-found" style="margin-left: 0.5rem;">Retrouvé</span>' : '';
+            
+            // Formater la date
+            const formattedDate = new Date(report.date).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            // Créer le contenu HTML de la carte
+            card.innerHTML = `
+                <img src="${report.image}" alt="${report.title}" class="card-image">
+                <div class="card-content">
+                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                        <span class="badge ${badgeClass}">${badgeText}</span>
+                        ${statusBadge}
+                    </div>
+                    <h3>${report.title}</h3>
+                    <div class="card-meta">
+                        <span><i class="fas fa-map-marker-alt"></i> ${report.location}</span>
+                        <span><i class="far fa-calendar"></i> ${formattedDate}</span>
+                    </div>
+                    <p class="card-description">${report.description}</p>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-weight: 600; color: var(--dark-color);">${report.category}</span>
+                        <button class="btn btn-primary view-report-btn" data-id="${report.id}">
+                            <i class="fas fa-eye"></i> Voir détails
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            // Ajouter un écouteur d'événement au bouton "Voir détails"
+            const viewBtn = card.querySelector('.view-report-btn');
+            viewBtn.addEventListener('click', function() {
+                viewReportDetails(report.id);
+            });
+            
+            return card;
+        }
+        
+        // Fonction pour afficher les détails d'un signalement
+        function viewReportDetails(id) {
+            const report = reportsDatabase.find(r => r.id === id);
+            
+            if (!report) return;
+            
+            // Formater la date
+            const formattedDate = new Date(report.date).toLocaleDateString('fr-FR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+            
+            // Déterminer le type en français
+            let typeText = '';
+            switch(report.type) {
+                case 'lost': typeText = 'Objet perdu'; break;
+                case 'missing': typeText = 'Personne disparue'; break;
+                case 'stolen': typeText = 'Chose volée'; break;
+            }
+            
+            // Créer le contenu du modal de détails
+            const modalContent = `
+                <div class="modal-header">
+                    <h2>Détails du signalement</h2>
+                    <button class="modal-close" id="closeDetailsModal">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div style="display: flex; gap: var(--spacing-md); margin-bottom: var(--spacing-md); flex-wrap: wrap;">
+                        <span class="badge ${report.type === 'lost' ? 'badge-lost' : report.type === 'missing' ? 'badge-missing' : 'badge-stolen'}">${typeText}</span>
+                        ${report.status === 'found' ? '<span class="badge badge-found">Retrouvé/Résolu</span>' : ''}
+                    </div>
+                    
+                    <h3>${report.title}</h3>
+                    
+                    <div style="margin-bottom: var(--spacing-md);">
+                        <img src="${report.image}" alt="${report.title}" style="width: 100%; border-radius: var(--border-radius);">
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--spacing-md); margin-bottom: var(--spacing-lg);">
+                        <div>
+                            <strong><i class="fas fa-map-marker-alt"></i> Lieu</strong>
+                            <p>${report.location}</p>
+                        </div>
+                        <div>
+                            <strong><i class="far fa-calendar"></i> Date</strong>
+                            <p>${formattedDate}</p>
+                        </div>
+                        <div>
+                            <strong><i class="fas fa-tag"></i> Catégorie</strong>
+                            <p>${report.category}</p>
+                        </div>
+                        ${report.reward ? `
+                        <div>
+                            <strong><i class="fas fa-gift"></i> Récompense</strong>
+                            <p>${report.reward}</p>
+                        </div>
+                        ` : ''}
+                    </div>
+                    
+                    <div style="margin-bottom: var(--spacing-lg);">
+                        <strong>Description</strong>
+                        <p>${report.description}</p>
+                    </div>
+                    
+                    <div style="background-color: var(--gray-light); padding: var(--spacing-md); border-radius: var(--border-radius); margin-bottom: var(--spacing-lg);">
+                        <strong><i class="fas fa-info-circle"></i> Information de contact</strong>
+                        <p>Pour toute information concernant ce signalement, contactez : <strong>${report.contact}</strong></p>
+                    </div>
+                    
+                    <div style="display: flex; gap: var(--spacing-md); justify-content: flex-end;">
+                        <button class="btn btn-outline" id="shareReportBtn">
+                            <i class="fas fa-share-alt"></i> Partager
+                        </button>
+                        ${report.status !== 'found' ? `
+                        <button class="btn btn-secondary" id="markAsFoundBtn" data-id="${report.id}">
+                            <i class="fas fa-check"></i> Marquer comme retrouvé
+                        </button>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            // Créer un nouveau modal pour les détails
+            const detailsModal = document.createElement('div');
+            detailsModal.className = 'modal';
+            detailsModal.id = 'detailsModal';
+            detailsModal.innerHTML = modalContent;
+            
+            // Ajouter le modal au body
+            document.body.appendChild(detailsModal);
+            
+            // Ouvrir le modal
+            openModal(detailsModal);
+            
+            // Configurer les écouteurs d'événements
+            document.getElementById('closeDetailsModal').addEventListener('click', () => {
+                closeModal(detailsModal);
+                setTimeout(() => detailsModal.remove(), 300);
+            });
+            
+            // Gérer le bouton "Partager"
+            document.getElementById('shareReportBtn').addEventListener('click', function() {
+                alert('Fonction de partage (simulation) - Le signalement serait partagé sur les réseaux sociaux');
+            });
+            
+            // Gérer le bouton "Marquer comme retrouvé"
+            const markAsFoundBtn = document.getElementById('markAsFoundBtn');
+            if (markAsFoundBtn) {
+                markAsFoundBtn.addEventListener('click', function() {
+                    const reportId = parseInt(this.getAttribute('data-id'));
+                    const reportIndex = reportsDatabase.findIndex(r => r.id === reportId);
+                    
+                    if (reportIndex !== -1) {
+                        reportsDatabase[reportIndex].status = 'found';
+                        alert('Signalement marqué comme retrouvé !');
+                        closeModal(detailsModal);
+                        setTimeout(() => detailsModal.remove(), 300);
+                        loadReports();
+                    }
+                });
+            }
+            
+            // Fermer le modal en cliquant à l'extérieur
+            detailsModal.addEventListener('click', function(e) {
+                if (e.target === detailsModal) {
+                    closeModal(detailsModal);
+                    setTimeout(() => detailsModal.remove(), 300);
+                }
+            });
+        }
+        
+        // Fonction pour obtenir une image aléatoire selon le type
+        function getRandomImageForType(type) {
+            const images = {
+                lost: [
+                    'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80',
+                    'https://images.unsplash.com/photo-1594736797933-d07d5d6c7c84?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80',
+                    'https://images.unsplash.com/photo-1582550945154-66ea8fff47e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80'
+                ],
+                missing: [
+                    'https://images.unsplash.com/photo-1551836026-d5c2c5af78e4?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80',
+                    'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80',
+                    'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80'
+                ],
+                stolen: [
+                    'https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80',
+                    'https://images.unsplash.com/photo-1586105251261-72a756497a11?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80',
+                    'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80'
+                ]
+            };
+            
+            const typeImages = images[type] || images.lost;
+            return typeImages[Math.floor(Math.random() * typeImages.length)];
+        }
+        
+        // Mettre à jour les statistiques en temps réel
+        function updateStats() {
+            // Simuler des statistiques en temps réel
+            const statsFound = document.getElementById('statsFound');
+            const statsResolved = document.getElementById('statsResolved');
+            const statsUsers = document.getElementById('statsUsers');
+            
+            // Incrémenter les statistiques périodiquement
+            setInterval(() => {
+                const currentFound = parseInt(statsFound.textContent.replace(/,/g, ''));
+                const currentResolved = parseInt(statsResolved.textContent.replace(/,/g, ''));
+                const currentUsers = parseInt(statsUsers.textContent.replace(/,/g, ''));
+                
+                // Ajouter un petit nombre aléatoire pour simuler la croissance
+                statsFound.textContent = (currentFound + Math.floor(Math.random() * 3)).toLocaleString();
+                statsResolved.textContent = (currentResolved + Math.floor(Math.random() * 2)).toLocaleString();
+                statsUsers.textContent = (currentUsers + Math.floor(Math.random() * 5)).toLocaleString();
+            }, 10000); // Mettre à jour toutes les 10 secondes
+        }
+        
+        // Démarrer la mise à jour des statistiques
+        updateStats();
+        
+        // Gestion du défilement fluide pour les ancres
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
