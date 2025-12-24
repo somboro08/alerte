@@ -1,0 +1,31 @@
+# Byte-compiled / optimized / dll files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+*.egg-info/
+.pytest_cache/
+
+# Environments
+.env
+venv/
+env/
+
+# IDEs and editors
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Database files
+*.db
+*.sqlite
+/instance/*.db
+/instance/*.sqlite
+
+# Uploaded media
+/static/uploads/
