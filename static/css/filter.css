@@ -585,8 +585,8 @@ header {
 
 /* ===== CARTES AMÉLIORÉES ===== */
 .card {
-    /*background: var(--card-bg);*/
-    backdrop-filter: blur(10px);
+    background:rgba(202, 222, 227, 0.367);
+   
     filter: drop-shadow(0 4px 5px rgba(119, 142, 205, 0.682));
     border-radius: var(--radius-xl);
     overflow: hidden;

@@ -70,11 +70,13 @@
     --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
     --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    --card-shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.1); /* New variable from signalement_detail.html */
     
     /* Transitions fluides */
     --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
     --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: var(--transition-normal); /* Aligning with existing definitions */
 }
 
 /* ===== RÉINITIALISATION ===== */
@@ -263,7 +265,7 @@ a:hover {
 
 /* ===== HEADER ===== */
 header {
-    background-color: var(--white);
+    background-color:rgba(235, 241, 255, 0.533);
     box-shadow: var(--shadow-sm);
     position: sticky;
     top: 0;

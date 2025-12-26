@@ -1,5 +1,4 @@
-# requirements-windows.txt
-fpdf2
+fpdf2==2.8.5
 qrcode==8.2
 SQLAlchemy==2.0.45
 Flask==2.3.0
@@ -9,12 +8,6 @@ Werkzeug==2.3.0
 Flask-SQLAlchemy==3.0.5
 Flask-Mail==0.9.1
 email_validator==2.0.0
-
+Flask-WTF==1.2.2
 Flask-Cors==4.0.0
 Pillow==10.0.0
-opencv-python-headless==4.8.0.74  # Version sans GUI pour serveur
-numpy
-
-# Alternatives pour face_recognition sur Windows
-deepface==0.0.79  # Alternative à face_recognition (plus facile sur Windows)
-# face_recognition # Commenté car problématique sur Windows
