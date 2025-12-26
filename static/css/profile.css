@@ -1,0 +1,147 @@
+/* =================================== */
+/* ======== PROFILE PAGE STYLES ======== */
+/* =================================== */
+
+.profile-page {
+    padding: var(--space-8) 0;
+}
+
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+}
+
+@media (min-width: 992px) {
+    .profile-grid {
+        grid-template-columns: 280px 1fr;
+    }
+}
+
+/* ===== SIDEBAR ===== */
+.profile-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.profile-user-card {
+    background: var(--card-bg);
+    border-radius: var(--radius-lg);
+    padding: var(--space-6);
+    text-align: center;
+    border: 1px solid var(--gray-light);
+}
+
+.profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    color: var(--white);
+    margin: 0 auto var(--space-4);
+    font-weight: 700;
+}
+
+.profile-username {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    margin-bottom: var(--space-1);
+}
+
+.profile-email {
+    font-size: var(--text-sm);
+    color: var(--gray-color);
+}
+
+.profile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.profile-nav .nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    border-radius: var(--radius-md);
+    color: var(--dark-medium);
+    font-weight: 500;
+    transition: all var(--transition-fast);
+}
+
+.profile-nav .nav-link i {
+    width: 20px;
+    text-align: center;
+    color: var(--gray-color);
+}
+
+.profile-nav .nav-link:hover {
+    background: var(--primary-ultralight);
+    color: var(--primary-dark);
+}
+
+.profile-nav .nav-link.active {
+    background: var(--primary-color);
+    color: var(--white);
+    font-weight: 600;
+}
+
+.profile-nav .nav-link.active i {
+    color: var(--white);
+}
+
+/* ===== MAIN CONTENT ===== */
+.profile-main-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.profile-main-content .card {
+    border: 1px solid var(--gray-light);
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+    .form-row {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.stats-grid-profile {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: var(--space-4);
+    text-align: center;
+}
+
+.stat-item .stat-value {
+    font-size: var(--text-3xl);
+    font-weight: 700;
+    color: var(--primary-color);
+    line-height: 1.1;
+}
+
+.stat-item .stat-label {
+    font-size: var(--text-sm);
+    color: var(--gray-color);
+}
+
+.danger-zone {
+    border-color: var(--danger-color);
+}
+
+.danger-zone .card-header h2 {
+    color: var(--danger-color);
+}

@@ -3,81 +3,43 @@
 {% block title %}Connexion - SignalAlert{% endblock %}
 
 {% block head_extra %}
-<style>
-.auth-container {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: var(--spacing-xxl) 0;
-}
-
-.auth-card {
-    background: var(--white);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-lg);
-}
-
-.auth-header {
-    text-align: center;
-    margin-bottom: var(--spacing-xl);
-}
-
-.auth-header h1 {
-    color: var(--primary-color);
-}
-
-.auth-footer {
-    text-align: center;
-    margin-top: var(--spacing-lg);
-    color: var(--gray-color);
-}
-
-.auth-footer a {
-    color: var(--primary-color);
-    font-weight: 600;
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="container auth-container">
-    <div class="auth-card">
-        <div class="auth-header">
-            <i class="fas fa-sign-in-alt fa-3x" style="color: var(--primary-color); margin-bottom: var(--spacing-md);"></i>
+<div class="form-page-container">
+    <div class="form-card">
+        <div class="form-header">
+            <i class="fas fa-sign-in-alt form-icon"></i>
             <h1>Connexion</h1>
-            <p>Accédez à votre compte SignalAlert</p>
+            <p>Accédez à votre compte SignalAlert pour continuer.</p>
         </div>
         
-        <form method="POST" action="{{ url_for('login') }}">
+        <form method="POST" action="{{ url_for('login') }}" class="form-body">
             <div class="form-group">
-                <label class="form-label">Adresse email</label>
-                <input type="email" class="form-control" name="email" 
-                       placeholder="votre@email.com" required>
+                <label for="email" class="form-label">Adresse email</label>
+                <input type="email" id="email" class="form-control" name="email" placeholder="votre@email.com" required>
             </div>
             
             <div class="form-group">
-                <label class="form-label">Mot de passe</label>
-                <input type="password" class="form-control" name="password" 
-                       placeholder="Votre mot de passe" required>
+                <label for="password" class="form-label">Mot de passe</label>
+                <input type="password" id="password" class="form-control" name="password" placeholder="Votre mot de passe" required>
             </div>
             
-            <!-- Dans le template login.html, ajoute ceci après le bouton de connexion -->
-<div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
-    <div>
-        <input type="checkbox" id="remember" name="remember">
-        <label for="remember" style="margin-left: 0.5rem;">Se souvenir de moi</label>
-    </div>
-    <a href="{{ url_for('forgot_password') }}" style="font-size: 0.9rem;">
-        <i class="fas fa-question-circle"></i> Mot de passe oublié ?
-    </a>
-</div>
+            <div class="form-group form-options">
+                <div class="checkbox-group">
+                    <input type="checkbox" id="remember" name="remember">
+                    <label for="remember">Se souvenir de moi</label>
+                </div>
+                <a href="{{ url_for('forgot_password') }}">Mot de passe oublié ?</a>
+            </div>
             
-            <button type="submit" class="btn btn-primary btn-block" style="margin-top: var(--spacing-lg);">
-                <i class="fas fa-sign-in-alt"></i> Se connecter
+            <button type="submit" class="btn btn-primary btn-block">
+                Se connecter
             </button>
         </form>
         
-        <div class="auth-footer">
+        <div class="form-footer">
             <p>Pas encore de compte ? <a href="{{ url_for('register') }}">S'inscrire gratuitement</a></p>
         </div>
     </div>

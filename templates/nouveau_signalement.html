@@ -1,297 +1,125 @@
 {% extends "base.html" %}
 
-{% block title %}Nouveau signalement - SignalAlert{% endblock %}
+{% block title %}Nouveau Signalement - SignalAlert{% endblock %}
 
 {% block head_extra %}
-<style>
-.form-container {
-    max-width: 800px;
-    margin: 0 auto;
-    padding: var(--spacing-xl) 0;
-}
-
-.form-section {
-    background: var(--white);
-    padding: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-    margin-bottom: var(--spacing-lg);
-    box-shadow: var(--shadow-md);
-}
-
-.form-section h2 {
-    color: var(--primary-color);
-    margin-bottom: var(--spacing-lg);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
-}
-
-.type-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--spacing-md);
-    margin: var(--spacing-md) 0;
-}
-
-.type-option {
-    border: 2px solid var(--gray-light);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-lg);
-    text-align: center;
-    cursor: pointer;
-    transition: all var(--transition-normal);
-}
-
-.type-option input {
-    display: none;
-}
-
-.type-option input:checked + .option-content {
-    border-color: var(--primary-color);
-    background: rgba(37, 99, 235, 0.05);
-}
-
-.option-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md);
-    border: 2px solid transparent;
-    border-radius: var(--border-radius);
-    transition: all var(--transition-normal);
-}
-
-.option-content i {
-    font-size: 2rem;
-}
-
-.option-content.lost i { color: var(--warning-color); }
-.option-content.missing i { color: var(--danger-color); }
-.option-content.stolen i { color: var(--primary-color); }
-
-.image-upload {
-    border: 2px dashed var(--gray-light);
-    border-radius: var(--border-radius);
-    padding: var(--spacing-xl);
-    text-align: center;
-    cursor: pointer;
-    transition: border-color var(--transition-normal);
-}
-
-.image-upload:hover {
-    border-color: var(--primary-color);
-}
-
-.image-preview {
-    max-width: 100%;
-    max-height: 300px;
-    margin-top: var(--spacing-md);
-    border-radius: var(--border-radius);
-    display: none;
-}
-
-.form-actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: var(--spacing-md);
-    margin-top: var(--spacing-xl);
-}
-
-.required::after {
-    content: ' *';
-    color: var(--danger-color);
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="container form-container">
-    <h1 style="margin-bottom: var(--spacing-xl);">
-        <i class="fas fa-plus-circle"></i> Nouveau signalement
-    </h1>
-    
-    <form method="POST" action="{{ url_for('nouveau_signalement') }}" id="reportForm" enctype="multipart/form-data">
-        <!-- Type et catégorie -->
-        <div class="form-section">
-            <h2><i class="fas fa-tag"></i> Type de signalement</h2>
+<div class="form-page-container">
+    <div class="form-card form-card-lg">
+        <div class="form-header">
+            <i class="fas fa-plus-circle form-icon"></i>
+            <h1>Nouveau Signalement</h1>
+            <p>Remplissez le formulaire pour publier un nouveau signalement.</p>
+        </div>
+
+        <form method="POST" action="{{ url_for('nouveau_signalement') }}" id="reportForm" enctype="multipart/form-data" class="form-body">
             
-            <div class="form-group">
-                <label class="form-label required">Type</label>
-                <div class="type-options">
-                    <label class="type-option">
-                        <input type="radio" name="type" value="lost" required>
-                        <div class="option-content lost">
-                            <i class="fas fa-key"></i>
-                            <span>Objet perdu</span>
-                        </div>
-                    </label>
-                    
-                    <label class="type-option">
-                        <input type="radio" name="type" value="missing" required>
-                        <div class="option-content missing">
-                            <i class="fas fa-user-friends"></i>
-                            <span>Personne disparue</span>
-                        </div>
-                    </label>
-                    
-                    <label class="type-option">
-                        <input type="radio" name="type" value="stolen" required>
-                        <div class="option-content stolen">
-                            <i class="fas fa-shield-alt"></i>
-                            <span>Chose volée</span>
-                        </div>
-                    </label>
+            <div class="form-section">
+                <h2 class="form-section-title">1. Type de Signalement</h2>
+                <div class="form-group">
+                    <label class="form-label required">Quel est le type de votre signalement ?</label>
+                    <div class="type-options">
+                        <label class="type-option">
+                            <input type="radio" name="type" value="lost" required>
+                            <div class="option-content">
+                                <i class="fas fa-key"></i>
+                                <span>Objet Perdu</span>
+                            </div>
+                        </label>
+                        <label class="type-option">
+                            <input type="radio" name="type" value="missing" required>
+                            <div class="option-content">
+                                <i class="fas fa-user-friends"></i>
+                                <span>Personne Disparue</span>
+                            </div>
+                        </label>
+                        <label class="type-option">
+                            <input type="radio" name="type" value="stolen" required>
+                            <div class="option-content">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Objet Volé</span>
+                            </div>
+                        </label>
+                    </div>
                 </div>
             </div>
-            
-            <div class="form-group">
-                <label class="form-label required">Catégorie</label>
-                <select class="form-control" name="category" required>
-                    <option value="">Sélectionnez une catégorie</option>
-                    <option value="electronics">Électronique</option>
-                    <option value="documents">Documents</option>
-                    <option value="jewelry">Bijoux</option>
-                    <option value="clothing">Vêtements</option>
-                    <option value="bags">Sacs</option>
-                    <option value="keys">Clés</option>
-                    <option value="animals">Animaux</option>
-                    <option value="other">Autre</option>
-                </select>
+
+            <div class="form-section">
+                <h2 class="form-section-title">2. Informations Détaillées</h2>
+                <div class="form-group">
+                    <label for="title" class="form-label required">Titre du signalement</label>
+                    <input type="text" id="title" class="form-control" name="title" placeholder="Ex: Portefeuille en cuir noir perdu près de..." required>
+                </div>
+                <div class="form-group">
+                    <label for="description" class="form-label required">Description</label>
+                    <textarea id="description" class="form-control" name="description" rows="5" placeholder="Donnez le plus de détails possible pour aider à l'identification." required></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="category" class="form-label required">Catégorie</label>
+                    <select id="category" class="form-control" name="category" required>
+                        <option value="" disabled selected>Sélectionnez une catégorie</option>
+                        <option value="electronics">Électronique</option>
+                        <option value="documents">Documents & Pièces d'identité</option>
+                        <option value="jewelry">Bijoux & Montres</option>
+                        <option value="clothing">Vêtements & Accessoires</option>
+                        <option value="bags">Sacs & Bagages</option>
+                        <option value="keys">Clés</option>
+                        <option value="animals">Animaux</option>
+                        <option value="other">Autre</option>
+                    </select>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="location" class="form-label required">Lieu</label>
+                        <input type="text" id="location" class="form-control" name="location" placeholder="Ex: Marché Dantokpa, Cotonou" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="date" class="form-label required">Date de l'incident</label>
+                        <input type="date" id="date" class="form-control" name="date" required>
+                    </div>
+                </div>
             </div>
-        </div>
-        
-        <!-- Informations principales -->
-        <div class="form-section">
-            <h2><i class="fas fa-info-circle"></i> Informations principales</h2>
-            
-            <div class="form-group">
-                <label class="form-label required">Titre</label>
-                <input type="text" class="form-control" name="title" 
-                       placeholder="Ex: Montre bracelet en or perdue" required>
+
+            <div class="form-section">
+                <h2 class="form-section-title">3. Médias et Contact</h2>
+                <div class="form-group">
+                    <label class="form-label">Photo (recommandé)</label>
+                    <label for="imageUploadInput" class="image-upload-area">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        <span id="imageUploadText">Cliquez pour choisir un fichier ou déposez-le ici.</span>
+                        <img id="imagePreview" class="image-preview" alt="Aperçu">
+                    </label>
+                    <input type="file" id="imageUploadInput" name="image" accept="image/*" style="display: none;">
+                </div>
+                <div class="form-group">
+                    <label for="reward" class="form-label">Récompense (optionnel)</label>
+                    <input type="text" id="reward" class="form-control" name="reward" placeholder="Ex: Une somme symbolique, un café, etc.">
+                </div>
             </div>
-            
-            <div class="form-group">
-                <label class="form-label required">Description détaillée</label>
-                <textarea class="form-control" name="description" rows="5" 
-                          placeholder="Décrivez l'objet, la personne ou la chose en détail..." required></textarea>
+
+            <div class="form-actions">
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Annuler</a>
+                <button type="submit" class="btn btn-primary">Publier le signalement</button>
             </div>
-            
-            <div class="form-group">
-                <label class="form-label required">Lieu</label>
-                <input type="text" class="form-control" name="location" 
-                       placeholder="Ex: Carré 123, Cotonou" required>
-            </div>
-        </div>
-        
-        <!-- Date et image -->
-        <div class="form-section">
-            <h2><i class="far fa-calendar"></i> Date et image</h2>
-            
-            <div class="form-group">
-                <label class="form-label required">Date de l'incident</label>
-                <input type="date" class="form-control" name="date" required>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Image (optionnel)</label>
-                <label for="imageUploadInput" class="image-upload">
-                    <i class="fas fa-cloud-upload-alt fa-2x" style="color: var(--gray-color); margin-bottom: var(--spacing-md);"></i>
-                    <p>Cliquez pour télécharger une image</p>
-                    <p class="text-muted">PNG, JPG, JPEG jusqu'à 5MB</p>
-                    <span id="imageFileName" class="text-muted" style="display: block; margin-top: var(--spacing-sm);"></span>
-                </label>
-                <input type="file" id="imageUploadInput" name="image" accept="image/png, image/jpeg, image/gif" style="display: none;">
-                <img id="imagePreview" class="image-preview" alt="Aperçu">
-            </div>
-        </div>
-        
-        <!-- Contact et récompense -->
-        <div class="form-section">
-            <h2><i class="fas fa-phone"></i> Contact et récompense</h2>
-            
-            <div class="form-group">
-                <label class="form-label">Coordonnées de contact</label>
-                <input type="text" class="form-control" name="contact" 
-                       placeholder="Email ou téléphone (optionnel)"
-                       value="{{ current_user.email }}">
-                <small class="text-muted">Si vide, votre email sera utilisé</small>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Récompense (optionnel)</label>
-                <input type="text" class="form-control" name="reward" 
-                       placeholder="Ex: 5000 CFA pour la personne qui retrouvera">
-            </div>
-        </div>
-        
-        <!-- Actions -->
-        <div class="form-actions">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline">
-                Annuler
-            </a>
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-paper-plane"></i> Publier le signalement
-            </button>
-        </div>
-    </form>
+        </form>
+    </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Initialiser la date à aujourd'hui
     const dateInput = document.querySelector('input[name="date"]');
-    const today = new Date().toISOString().split('T')[0];
-    dateInput.value = today;
-    
-    // Gestion des types
-    const typeOptions = document.querySelectorAll('.type-option input');
-    typeOptions.forEach(option => {
-        option.addEventListener('change', function() {
-            document.querySelectorAll('.type-option').forEach(opt => {
-                opt.style.borderColor = '';
-            });
-            if (this.checked) {
-                this.closest('.type-option').style.borderColor = 'var(--primary-color)';
-            }
-        });
-    });
-    
-    // Validation
-    const form = document.getElementById('reportForm');
-    form.addEventListener('submit', function(e) {
-        let valid = true;
-        
-        // Vérifier les champs requis
-        const requiredFields = form.querySelectorAll('[required]');
-        requiredFields.forEach(field => {
-            if (!field.value.trim()) {
-                field.style.borderColor = 'var(--danger-color)';
-                valid = false;
-            } else {
-                field.style.borderColor = '';
-            }
-        });
-        
-        // Vérifier le type
-        const typeSelected = document.querySelector('input[name="type"]:checked');
-        if (!typeSelected) {
-            alert('Veuillez sélectionner un type de signalement');
-            valid = false;
-        }
-        
-        if (!valid) {
-            e.preventDefault();
-            alert('Veuillez remplir tous les champs obligatoires');
-        }
-    });
+    if (dateInput) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
 
-    // Image Upload Preview
     const imageUploadInput = document.getElementById('imageUploadInput');
     const imagePreview = document.getElementById('imagePreview');
-    const imageFileNameSpan = document.getElementById('imageFileName');
+    const imageUploadText = document.getElementById('imageUploadText');
 
     if (imageUploadInput) {
         imageUploadInput.addEventListener('change', function() {
@@ -300,13 +128,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 reader.onload = function(e) {
                     imagePreview.src = e.target.result;
                     imagePreview.style.display = 'block';
+                    imageUploadText.style.display = 'none';
                 };
                 reader.readAsDataURL(this.files[0]);
-                imageFileNameSpan.textContent = this.files[0].name; // Display file name
-            } else {
-                imagePreview.src = '';
-                imagePreview.style.display = 'none';
-                imageFileNameSpan.textContent = '';
             }
         });
     }
