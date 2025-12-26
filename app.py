@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, send_from_directory, send_file
+from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, send_from_directory, send_file, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime, timedelta
@@ -14,6 +14,9 @@ from fpdf import FPDF
 from werkzeug.utils import secure_filename
 import uuid
 from flask_wtf.csrf import generate_csrf # New import for CSRF token
+import numpy as np
+import pickle
+from facial_recognition import face_service # NEW IMPORT
 
 app = Flask(__name__, 
             static_folder='static',
@@ -37,6 +40,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+# NEW FACE SEARCH CONFIGURATION
+FACE_SEARCH_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'face_search')
+MAX_FACE_IMAGE_SIZE = 16 * 1024 * 1024  # 16MB
+os.makedirs(FACE_SEARCH_UPLOAD_FOLDER, exist_ok=True) # Ensure face search upload folder exists
+# END NEW FACE SEARCH CONFIGURATION
 
 app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///signalalert.db'
@@ -65,6 +74,7 @@ class User(UserMixin, db.Model):
     
     signalements = db.relationship('Signalement', backref='author', lazy=True)
     reset_tokens = db.relationship('PasswordResetToken', backref='user', lazy=True, cascade='all, delete-orphan')
+    face_encodings = db.relationship('FaceEncoding', backref='user', lazy=True)
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -107,6 +117,38 @@ class Signalement(db.Model):
     additional_info = db.Column(db.Text, nullable=True)
     phone = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(120), nullable=True) # Assuming this is separate from 'contact'
+    
+    face_encoding = db.relationship('FaceEncoding', backref='signalement', lazy=True, uselist=False)
+
+class FaceEncoding(db.Model):
+    __tablename__ = 'face_encodings'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    signalement_id = db.Column(db.Integer, db.ForeignKey('signalement.id'))
+    
+    # Stocker l'encodage facial sous forme binaire
+    encoding = db.Column(db.LargeBinary)
+    
+    # Métadonnées
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active = db.Column(db.Boolean, default=True)
+
+class FaceMatch(db.Model):
+    __tablename__ = 'face_matches'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    search_id = db.Column(db.String(100))  # ID unique pour chaque recherche
+    original_signalement_id = db.Column(db.Integer)
+    matched_signalement_id = db.Column(db.Integer)
+    confidence = db.Column(db.Float)  # Score de similarité (0-1)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Index pour performances
+    __table_args__ = (
+        db.Index('idx_search_id', 'search_id'),
+        db.Index('idx_confidence', 'confidence'),
+    )
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -186,6 +228,21 @@ def create_reset_token(user):
 def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def validate_image(image_file):
+    """Valide l'image avant traitement"""
+    try:
+        img = Image.open(image_file)
+        img.verify()
+        image_file.seek(0)
+        
+        # Vérifier la taille
+        if img.size[0] * img.size[1] > 4000 * 4000:
+            return False, "Image trop grande"
+            
+        return True, "OK"
+    except Exception as e:
+        return False, f"Image invalide: {str(e)}"
 
 @app.context_processor
 def inject_now():
@@ -425,6 +482,16 @@ def nouveau_signalement():
         if qr_code_path:
             signalement.qr_code_url = qr_code_path
             db.session.commit() # Commit the QR code path update
+        
+        # NEW: Save face encoding if signalement type is 'missing' and an image was uploaded
+        if signalement.type == 'missing' and image_url:
+            image_full_path = os.path.join(app.config['UPLOAD_FOLDER'], image_url)
+            with open(image_full_path, 'rb') as f:
+                image_data = f.read()
+            
+            if not face_service.save_face_encoding(signalement.id, image_data):
+                flash('Avertissement: Impossible d\'encoder le visage de l\'image fournie pour la recherche faciale.', 'warning')
+
 
         flash('Signalement créé avec succès !', 'success')
         return redirect(url_for('signalement_detail', id=signalement.id))
@@ -603,8 +670,8 @@ def forgot_password():
 
 @app.route('/reset-password/<token>', methods=['GET', 'POST'])
 def reset_password(token):
-    
-    # Vérifier le token
+    # Retrieve the reset token from the database
+    reset_token = PasswordResetToken.query.filter_by(token=token).first()
     
     if not reset_token or not reset_token.is_valid():
         flash('Le lien de réinitialisation est invalide ou a expiré.', 'error')
@@ -716,6 +783,149 @@ def api_mark_as_found(id):
     signalement.status = 'found'
     db.session.commit()
     return jsonify({'message': 'Signalement marqué comme retrouvé'})
+
+# NEW FACE SEARCH ROUTES
+
+@app.route('/recherche-visage', methods=['GET', 'POST'])
+def recherche_visage():
+    """Page de recherche par visage"""
+    if request.method == 'POST':
+        # Vérifier si un fichier a été envoyé
+        if 'face_image' not in request.files:
+            flash('Aucune image sélectionnée', 'error')
+            return redirect(request.url)
+        
+        file = request.files['face_image']
+        
+        # Vérifier si un fichier a été sélectionné
+        if file.filename == '':
+            flash('Aucune image sélectionnée', 'error')
+            return redirect(request.url)
+        
+        if file and allowed_file(file.filename):
+            try:
+                # Valider l'image
+                is_valid, message = validate_image(file)
+                if not is_valid:
+                    flash(message, 'error')
+                    return redirect(request.url)
+                
+                # Lire l'image
+                file.seek(0)
+                image_data = file.read()
+                
+                # Générer un ID de recherche
+                search_id = str(uuid.uuid4())
+                
+                # Sauvegarder l'image temporairement
+                filename = f"{search_id}_{secure_filename(file.filename)}"
+                file_path = os.path.join(FACE_SEARCH_UPLOAD_FOLDER, filename)
+                file.seek(0)
+                file.save(file_path)
+                
+                # Rechercher des correspondances
+                results = face_service.search_similar_faces(image_data, max_results=20)
+                
+                if results.get('error'):
+                    flash(results['error'], 'warning')
+                    return redirect(request.url)
+                
+                # Récupérer les détails des signalements correspondants
+                matches_with_details = []
+                for match in results['matches']:
+                    signalement = Signalement.query.get(match['signalement_id'])
+                    if signalement:
+                        match_details = {
+                            'signalement': signalement,
+                            'confidence': match['confidence'],
+                            'match_level': match['match_level']
+                        }
+                        matches_with_details.append(match_details)
+                
+                return render_template('recherche_visage.html',
+                                     results=matches_with_details,
+                                     search_id=search_id,
+                                     image_url=f"/static/uploads/face_search/{filename}", # Corrected path for template
+                                     total_found=len(matches_with_details))
+                
+            except Exception as e:
+                flash(f"Erreur lors du traitement: {str(e)}", 'error')
+                return redirect(request.url)
+        
+        else:
+            flash('Format de fichier non supporté', 'error')
+            return redirect(request.url)
+    
+    return render_template('recherche_visage.html')
+
+@app.route('/api/search-face', methods=['POST'])
+def api_search_face():
+    """API pour la recherche de visage"""
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
+    
+    file = request.files['image']
+    
+    if file.filename == '':
+        return jsonify({'error': 'No image selected'}), 400
+    
+    if file and allowed_file(file.filename):
+        try:
+            image_data = file.read()
+            results = face_service.search_similar_faces(image_data)
+            
+            # Ajouter les URLs des signalements
+            for match in results['matches']:
+                signalement = Signalement.query.get(match['signalement_id'])
+                if signalement:
+                    match['signalement_url'] = url_for('signalement_detail', 
+                                                      id=signalement.id, 
+                                                      _external=True)
+                    match['title'] = signalement.title
+                    match['type'] = signalement.type
+                    match['location'] = signalement.location
+                    match['description'] = signalement.description
+                    match['image_url'] = url_for('static', filename=f'uploads/images/{signalement.image_url}') if signalement.image_url else '/static/default-avatar.jpg'
+            
+            return jsonify(results)
+            
+        except Exception as e:
+            return jsonify({'error': str(e)}), 500
+    
+    return jsonify({'error': 'Invalid file format'}), 400
+
+@app.route('/admin/face-encodings/update')
+@login_required
+def update_face_encodings():
+    """Met à jour tous les encodages faciaux"""
+    # Assuming User model has an 'is_admin' attribute, or check email as done in admin_donnees
+    if not (current_user.is_authenticated and current_user.email == 'admin@signalalert.bj'):
+        abort(403)
+    
+    signalements = Signalement.query.filter_by(type='missing').all()
+    updated = 0
+    failed = 0
+    
+    for signalement in signalements:
+        if signalement.image_url:
+            image_path = os.path.join(app.config['UPLOAD_FOLDER'], signalement.image_url)
+            if os.path.exists(image_path):
+                with open(image_path, 'rb') as f:
+                    image_data = f.read()
+                
+                # Check if an encoding already exists for this signalement
+                existing_encoding = FaceEncoding.query.filter_by(signalement_id=signalement.id).first()
+                if existing_encoding:
+                    # For now, we'll just skip if exists. Could add update logic later.
+                    continue
+                
+                if face_service.save_face_encoding(signalement.id, image_data):
+                    updated += 1
+                else:
+                    failed += 1
+    
+    flash(f"{updated} encodages mis à jour, {failed} échecs", 'info')
+    return redirect(url_for('admin_donnees')) # Redirect to admin dashboard or similar
 
 # ROUTES ADMIN
 

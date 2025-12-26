@@ -1,0 +1,620 @@
+<!-- templates/recherche_visage.html -->
+{% extends "base.html" %}
+
+{% block title %}Recherche par visage - SignalAlert{% endblock %}
+
+{% block head_extra %}
+<style>
+    .search-container {
+        max-width: 1000px;
+        margin: 2rem auto;
+        padding: 2rem;
+    }
+    
+    .upload-area {
+        border: 3px dashed var(--primary-color);
+        border-radius: 20px;
+        padding: 3rem;
+        text-align: center;
+        background: rgba(255, 140, 60, 0.05);
+        transition: all 0.3s ease;
+        cursor: pointer;
+        margin-bottom: 2rem;
+    }
+    
+    .upload-area:hover {
+        background: rgba(255, 140, 60, 0.1);
+        border-color: var(--secondary-color);
+        transform: translateY(-5px);
+    }
+    
+    .upload-area.drag-over {
+        background: rgba(255, 140, 60, 0.2);
+        border-color: var(--secondary-color);
+    }
+    
+    .upload-icon {
+        font-size: 4rem;
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+    }
+    
+    .preview-container {
+        max-width: 400px;
+        margin: 0 auto 2rem;
+        position: relative;
+    }
+    
+    .preview-image {
+        width: 100%;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    .results-container {
+        margin-top: 3rem;
+    }
+    
+    .match-card {
+        display: flex;
+        gap: 2rem;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 15px;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+    
+    .match-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+    }
+    
+    .match-card.high-match {
+        border-color: #2ecc71;
+        border-left-width: 5px;
+    }
+    
+    .match-card.medium-match {
+        border-color: #f39c12;
+        border-left-width: 5px;
+    }
+    
+    .match-card.low-match {
+        border-color: #e74c3c;
+        border-left-width: 5px;
+    }
+    
+    .confidence-badge {
+        display: inline-block;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-weight: bold;
+        font-size: 0.9rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .confidence-high {
+        background: #2ecc71;
+        color: white;
+    }
+    
+    .confidence-medium {
+        background: #f39c12;
+        color: white;
+    }
+    
+    .confidence-low {
+        background: #e74c3c;
+        color: white;
+    }
+    
+    .match-thumbnail {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 10px;
+        flex-shrink: 0;
+    }
+    
+    .match-details {
+        flex: 1;
+    }
+    
+    .match-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 1rem;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+    }
+    
+    .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 5px solid #f3f3f3;
+        border-top: 5px solid var(--primary-color);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .requirements {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    .requirements ul {
+        margin: 0;
+        padding-left: 1.5rem;
+    }
+    
+    .requirements li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .webcam-container {
+        margin: 2rem 0;
+        text-align: center;
+    }
+    
+    #video {
+        width: 100%;
+        max-width: 500px;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .webcam-controls {
+        margin-top: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .match-card {
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .match-thumbnail {
+            width: 100%;
+            height: 200px;
+        }
+        
+        .upload-area {
+            padding: 2rem 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container search-container">
+    <h1 class="text-center mb-4">
+        <i class="fas fa-search"></i> Recherche par visage
+    </h1>
+    
+    <p class="text-center text-muted mb-5">
+        Recherchez une personne disparue en comparant une photo avec notre base de données
+    </p>
+    
+    <!-- Zone de dépôt d'image -->
+    <div class="upload-area" id="dropZone">
+        <div class="upload-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+        </div>
+        <h3>Déposez votre image ici</h3>
+        <p class="text-muted">ou cliquez pour parcourir vos fichiers</p>
+        <p class="small text-muted">
+            Formats supportés : JPG, PNG, GIF | Max. 16MB
+        </p>
+        <input type="file" id="fileInput" accept="image/*" class="d-none">
+        <button class="btn btn-primary mt-3" onclick="document.getElementById('fileInput').click()">
+            <i class="fas fa-folder-open"></i> Choisir une image
+        </button>
+        
+        <!-- Webcam option -->
+        <div class="mt-4">
+            <button class="btn btn-outline-primary" onclick="openWebcam()">
+                <i class="fas fa-camera"></i> Prendre une photo
+            </button>
+        </div>
+    </div>
+    
+    <!-- Webcam container (caché par défaut) -->
+    <div class="webcam-container" id="webcamContainer" style="display: none;">
+        <video id="video" autoplay></video>
+        <div class="webcam-controls">
+            <button class="btn btn-success" onclick="capturePhoto()">
+                <i class="fas fa-camera"></i> Capturer
+            </button>
+            <button class="btn btn-outline-secondary" onclick="closeWebcam()">
+                <i class="fas fa-times"></i> Annuler
+            </button>
+        </div>
+    </div>
+    
+    <!-- Aperçu de l'image -->
+    <div class="preview-container" id="previewContainer" style="display: none;">
+        <img id="previewImage" class="preview-image" src="" alt="Aperçu">
+        <button class="btn btn-sm btn-outline-danger mt-2" onclick="clearImage()">
+            <i class="fas fa-times"></i> Supprimer
+        </button>
+    </div>
+    
+    <!-- Bouton de recherche -->
+    <div class="text-center">
+        <button class="btn btn-primary btn-lg" id="searchBtn" style="display: none;">
+            <i class="fas fa-search"></i> Lancer la recherche
+        </button>
+    </div>
+    
+    <!-- Résultats -->
+    <div class="results-container" id="resultsContainer" style="display: none;">
+        <h2 class="mb-4">
+            <i class="fas fa-chart-line"></i> Résultats de la recherche
+            <small class="text-muted" id="resultsCount"></small>
+        </h2>
+        
+        <div id="matchesList"></div>
+        
+        <div class="text-center mt-4">
+            <button class="btn btn-outline-primary" onclick="newSearch()">
+                <i class="fas fa-redo"></i> Nouvelle recherche
+            </button>
+        </div>
+    </div>
+    
+    <!-- Exigences pour une bonne recherche -->
+    <div class="requirements">
+        <h5><i class="fas fa-lightbulb"></i> Pour de meilleurs résultats :</h5>
+        <ul>
+            <li>Utilisez une photo claire et nette du visage</li>
+            <li>Le visage doit être bien éclairé et visible</li>
+            <li>Évitez les photos de groupe ou les visages masqués</li>
+            <li>Les photos de face donnent les meilleurs résultats</li>
+            <li>Assurez-vous que le visage occupe au moins 30% de l'image</li>
+        </ul>
+    </div>
+</div>
+
+<!-- Overlay de chargement -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="text-center">
+        <div class="loading-spinner"></div>
+        <h3 class="mt-3">Analyse en cours...</h3>
+        <p class="text-muted">Veuillez patienter pendant la recherche</p>
+    </div>
+</div>
+
+<!-- Template pour les résultats -->
+<template id="matchTemplate">
+    <div class="match-card {match_class}">
+        <img src="{image_url}" alt="{title}" class="match-thumbnail">
+        <div class="match-details">
+            <div class="match-header">
+                <div>
+                    <span class="confidence-badge {confidence_class}">{confidence}%</span>
+                    <h4 class="mb-1">{title}</h4>
+                    <p class="text-muted mb-1">
+                        <i class="fas fa-map-marker-alt"></i> {location}
+                    </p>
+                </div>
+                <div>
+                    <span class="badge badge-{type}">
+                        {type_text}
+                    </span>
+                </div>
+            </div>
+            <p class="mb-2">{description}</p>
+            <div class="d-flex justify-content-between align-items-center">
+                <small class="text-muted">
+                    <i class="fas fa-user"></i> Publié par {author}
+                </small>
+                <a href="{detail_url}" class="btn btn-primary btn-sm">
+                    <i class="fas fa-eye"></i> Voir détails
+                </a>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let selectedFile = null;
+let stream = null;
+
+// Initialisation
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('fileInput');
+    const dropZone = document.getElementById('dropZone');
+    const previewContainer = document.getElementById('previewContainer');
+    const previewImage = document.getElementById('previewImage');
+    const searchBtn = document.getElementById('searchBtn');
+    
+    // Gestion du drag & drop
+    dropZone.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+    });
+    
+    dropZone.addEventListener('dragleave', function() {
+        dropZone.classList.remove('drag-over');
+    });
+    
+    dropZone.addEventListener('drop', function(e) {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+            handleFile(files[0]);
+        }
+    });
+    
+    // Gestion de la sélection de fichier
+    fileInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            handleFile(this.files[0]);
+        }
+    });
+    
+    // Bouton de recherche
+    searchBtn.addEventListener('click', function() {
+        performSearch();
+    });
+});
+
+function handleFile(file) {
+    // Vérifier la taille
+    if (file.size > 16 * 1024 * 1024) {
+        alert('Fichier trop volumineux (max 16MB)');
+        return;
+    }
+    
+    // Vérifier le type
+    if (!file.type.match('image.*')) {
+        alert('Veuillez sélectionner une image');
+        return;
+    }
+    
+    selectedFile = file;
+    
+    // Afficher l'aperçu
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        document.getElementById('previewImage').src = e.target.result;
+        document.getElementById('previewContainer').style.display = 'block';
+        document.getElementById('searchBtn').style.display = 'block';
+        document.getElementById('dropZone').style.display = 'none';
+    };
+    reader.readAsDataURL(file);
+}
+
+// Webcam functions
+async function openWebcam() {
+    try {
+        const constraints = {
+            video: {
+                width: { ideal: 1280 },
+                height: { ideal: 720 },
+                facingMode: 'user'
+            }
+        };
+        
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+        const video = document.getElementById('video');
+        video.srcObject = stream;
+        
+        document.getElementById('webcamContainer').style.display = 'block';
+        document.getElementById('dropZone').style.display = 'none';
+        
+    } catch (err) {
+        console.error('Erreur webcam:', err);
+        alert('Impossible d\'accéder à la webcam');
+    }
+}
+
+function capturePhoto() {
+    const video = document.getElementById('video');
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+    
+    // Convertir en blob
+    canvas.toBlob(function(blob) {
+        selectedFile = new File([blob], 'webcam-photo.jpg', { type: 'image/jpeg' });
+        
+        // Afficher l'aperçu
+        const previewUrl = URL.createObjectURL(blob);
+        document.getElementById('previewImage').src = previewUrl;
+        document.getElementById('previewContainer').style.display = 'block';
+        document.getElementById('searchBtn').style.display = 'block';
+        document.getElementById('webcamContainer').style.display = 'none';
+        
+        // Arrêter la webcam
+        closeWebcam();
+    }, 'image/jpeg', 0.95);
+}
+
+function closeWebcam() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    document.getElementById('webcamContainer').style.display = 'none';
+    document.getElementById('dropZone').style.display = 'block';
+}
+
+function clearImage() {
+    selectedFile = null;
+    document.getElementById('previewContainer').style.display = 'none';
+    document.getElementById('searchBtn').style.display = 'none';
+    document.getElementById('dropZone').style.display = 'block';
+    document.getElementById('fileInput').value = '';
+}
+
+async function performSearch() {
+    if (!selectedFile) {
+        alert('Veuillez sélectionner une image');
+        return;
+    }
+    
+    // Afficher le loading
+    document.getElementById('loadingOverlay').style.display = 'flex';
+    
+    const formData = new FormData();
+    formData.append('face_image', selectedFile);
+    
+    try {
+        const response = await fetch('/recherche-visage', {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (response.ok) {
+            // Recharger la page pour afficher les résultats
+            window.location.href = response.url; // Use response.url to handle redirects
+        } else {
+            const error = await response.text();
+            throw new Error(error);
+        }
+    } catch (error) {
+        console.error('Erreur:', error);
+        alert('Erreur lors de la recherche: ' + error.message);
+    } finally {
+        document.getElementById('loadingOverlay').style.display = 'none';
+    }
+}
+
+// Pour l'API (alternative AJAX) - This part will only be used if results are rendered client-side
+// The current Flask route directly renders the page with results, so this function is not directly called
+// but kept for reference based on instruction-suite.md
+async function performApiSearch() {
+    if (!selectedFile) return;
+    
+    const formData = new FormData();
+    formData.append('image', selectedFile);
+    
+    try {
+        const response = await fetch('/api/search-face', {
+            method: 'POST',
+            body: formData
+        });
+        
+        const data = await response.json();
+        
+        if (data.error) {
+            throw new Error(data.error);
+        }
+        
+        displayResults(data);
+        
+    } catch (error) {
+        console.error('Erreur API:', error);
+        alert('Erreur: ' + error.message);
+    }
+}
+
+function displayResults(data) {
+    const container = document.getElementById('resultsContainer');
+    const list = document.getElementById('matchesList');
+    const count = document.getElementById('resultsCount');
+    
+    // Afficher le container
+    container.style.display = 'block';
+    
+    // Mettre à jour le compteur
+    count.textContent = ` (${data.matches_found} correspondances)`;
+    
+    // Effacer les anciens résultats
+    list.innerHTML = '';
+    
+    if (data.matches.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-5">
+                <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                <h4>Aucune correspondance trouvée</h4>
+                <p class="text-muted">Essayez avec une autre photo</p>
+            </div>
+        `;
+        return;
+    }
+    
+    // Afficher les résultats
+    data.matches.forEach(match => {
+        const template = document.getElementById('matchTemplate').innerHTML;
+        
+        // Déterminer la classe CSS en fonction de la confiance
+        let matchClass = '';
+        let confidenceClass = '';
+        
+        if (match.confidence >= 80) {
+            matchClass = 'high-match';
+            confidenceClass = 'confidence-high';
+        } else if (match.confidence >= 60) {
+            matchClass = 'medium-match';
+            confidenceClass = 'confidence-medium';
+        } else {
+            matchClass = 'low-match';
+            confidenceClass = 'confidence-low';
+        }
+        
+        // Remplir le template
+        const html = template
+            .replace('{match_class}', matchClass)
+            .replace('{confidence_class}', confidenceClass)
+            .replace('{confidence}', match.confidence)
+            .replace('{title}', match.title || 'Signalement')
+            .replace('{location}', match.location || 'Localisation inconnue')
+            .replace('{type}', match.type || 'missing')
+            .replace('{type_text}', getTypeText(match.type))
+            .replace('{description}', match.description || '')
+            .replace('{author}', 'Utilisateur')
+            .replace('{detail_url}', match.signalement_url || '#')
+            .replace('{image_url}', match.image_url || '/static/default-avatar.jpg');
+        
+        list.innerHTML += html;
+    });
+}
+
+function getTypeText(type) {
+    switch(type) {
+        case 'missing': return 'Personne disparue';
+        case 'lost': return 'Objet perdu';
+        case 'theft': return 'Objet volé';
+        default: return 'Signalement';
+    }
+}
+
+function newSearch() {
+    selectedFile = null;
+    document.getElementById('resultsContainer').style.display = 'none';
+    document.getElementById('previewContainer').style.display = 'none';
+    document.getElementById('searchBtn').style.display = 'none';
+    document.getElementById('dropZone').style.display = 'block';
+    document.getElementById('fileInput').value = '';
+}
+</script>
+{% endblock %}
