@@ -3,188 +3,141 @@
 {% block title %}Signalements - SignalAlert{% endblock %}
 
 {% block head_extra %}
-<style>
-.search-section {
-    background: var(--white);
-    padding: var(--space-12);
-    border-radius: var(--radius-lg);
-    margin-bottom: var(--space-10);
-    box-shadow: var(--shadow-md);
-}
-
-.search-form {
-    display: flex;
-    gap: var(--space-12);
-    margin-bottom: var(--space-10);
-}
-
-.search-input {
-    flex: 1;
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--gray-light);
-    border-radius: var(--border-radius);
-    font-size: 1rem;
-}
-
-.filter-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space);
-}
-
-.pagination {
-    display: flex;
-    justify-content: center;
-    gap: var(--spacing-sm);
-    margin-top: var(--spacing-xl);
-}
-
-.page-link {
-    padding: 0.5rem 1rem;
-    border: 1px solid var(--gray-light);
-    border-radius: var(--border-radius);
-    color: var(--dark-color);
-    text-decoration: none;
-}
-
-.page-link.active {
-    background: var(--primary-color);
-    color: var(--white);
-    border-color: var(--primary-color);
-}
-
-.no-results {
-    text-align: center;
-    padding: var(--spacing-xxl);
-    color: var(--gray-color);
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/signalements.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container signalements-page">
+    
     <!-- Search Section -->
     <div class="search-section">
-        <h1>Signalements</h1>
-        <p>Parcourez les signalements de notre communauté</p>
+        <div class="search-header">
+            <h1>Signalements</h1>
+            <p class="lead">Parcourez, recherchez et filtrez les signalements de notre communauté.</p>
+        </div>
         
         <form method="GET" action="{{ url_for('signalements') }}" class="search-form">
-            <input type="text" 
-                   name="search" 
-                   class="search-input" 
-                   placeholder="Rechercher un objet, une personne..."
-                   value="{{ search_query }}">
-            <button type="submit" class="btn btn-primary">
-                <i class="fas fa-search"></i> Rechercher
-            </button>
+            <div class="search-input-wrapper">
+                <i class="fas fa-search"></i>
+                <input type="text" 
+                       name="search" 
+                       class="search-input" 
+                       placeholder="Rechercher par mot-clé, lieu, catégorie..."
+                       value="{{ search_query }}">
+            </div>
+            <button type="submit" class="btn btn-primary">Rechercher</button>
         </form>
         
         <div class="filter-tags">
-            <a href="{{ url_for('signalements') }}" 
-               class="filter-btn {% if not current_filter %}active{% endif %}">
-                Tous les signalements
+            <a href="{{ url_for('signalements') }}" class="filter-tag {% if not current_filter %}active{% endif %}">
+                <i class="fas fa-list"></i> Tous
             </a>
-            <a href="{{ url_for('signalements') }}?type=lost" 
-               class="filter-btn {% if current_filter == 'lost' %}active{% endif %}">
-                Objets perdus
+            <a href="{{ url_for('signalements', type='lost') }}" class="filter-tag {% if current_filter == 'lost' %}active{% endif %}">
+                <i class="fas fa-search"></i> Objets perdus
             </a>
-            <a href="{{ url_for('signalements') }}?type=missing" 
-               class="filter-btn {% if current_filter == 'missing' %}active{% endif %}">
-                Personnes disparues
+            <a href="{{ url_for('signalements', type='missing') }}" class="filter-tag {% if current_filter == 'missing' %}active{% endif %}">
+                <i class="fas fa-user-slash"></i> Personnes disparues
             </a>
-            <a href="{{ url_for('signalements') }}?type=stolen" 
-               class="filter-btn {% if current_filter == 'stolen' %}active{% endif %}">
-                Choses volées
+            <a href="{{ url_for('signalements', type='stolen') }}" class="filter-tag {% if current_filter == 'stolen' %}active{% endif %}">
+                <i class="fas fa-shield-alt"></i> Objets volés
             </a>
         </div>
     </div>
     
-    <!-- Results -->
+    <!-- Results Section -->
     <div class="results-section">
-        <h3 style="margin-bottom: var(--spacing-lg);">
-            {{ signalements.total }} signalement{% if signalements.total > 1 %}s{% endif %} trouvé{% if signalements.total > 1 %}s{% endif %}
-        </h3>
+        <div class="results-header">
+            <h3>
+                {{ signalements.total }} signalement{% if signalements.total > 1 %}s{% endif %}
+            </h3>
+            <!-- TODO: Add sorting options here -->
+        </div>
         
         {% if signalements.items %}
         <div class="reports-grid">
             {% for signalement in signalements.items %}
-            <div class="report-card card">
-                {% if signalement.image_url %}
-                <img src="/static/uploads/images/{{ signalement.image_url }}" alt="{{ signalement.title }}" class="card-image">
-                {% else %}
-                <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80" alt="{{ signalement.title }}" class="card-image">
-                {% endif %}
-                
-                <div class="card-content">
-                    <div style="display: flex; align-items: center; margin-bottom: 0.5rem;">
-                        <span class="badge badge-{{ signalement.type }}">
-                            {% if signalement.type == 'lost' %}Objet perdu
-                            {% elif signalement.type == 'missing' %}Personne disparue
-                            {% else %}Chose volée{% endif %}
-                        </span>
-                        {% if signalement.status == 'found' %}
-                        <span class="badge badge-found" style="margin-left: 0.5rem;">Retrouvé</span>
+            <a href="{{ url_for('signalement_detail', id=signalement.id) }}" class="report-card-link">
+                <div class="report-card">
+                    <div class="card-image-container">
+                        {% if signalement.image_url %}
+                        <img src="/static/uploads/images/{{ signalement.image_url }}" alt="{{ signalement.title }}" class="card-image">
+                        {% else %}
+                        <div class="card-image-placeholder">
+                            <i class="fas fa-image"></i>
+                        </div>
                         {% endif %}
+                        <div class="card-overlay">
+                            <span class="view-details-btn">Voir détails</span>
+                        </div>
+                        <span class="badge badge-type badge-{{ signalement.type }}">
+                            {% if signalement.type == 'lost' %}Perdu
+                            {% elif signalement.type == 'missing' %}Disparu
+                            {% else %}Volé{% endif %}
+                        </span>
                     </div>
                     
-                    <h3>{{ signalement.title }}</h3>
-                    
-                    <div class="card-meta">
-                        <span><i class="fas fa-map-marker-alt"></i> {{ signalement.location }}</span>
-                        <span><i class="far fa-calendar"></i> {{ signalement.date.strftime('%d/%m/%Y') }}</span>
-                    </div>
-                    
-                    <p class="card-description">{{ signalement.description[:200] }}...</p>
-                    
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--spacing-md);">
-                        <span style="font-weight: 600; color: var(--dark-color);">{{ signalement.category or 'Non spécifié' }}</span>
-                        <a href="{{ url_for('signalement_detail', id=signalement.id) }}" class="btn btn-primary">
-                            <i class="fas fa-eye"></i> Voir détails
-                        </a>
+                    <div class="card-content">
+                        <h4 class="card-title">{{ signalement.title }}</h4>
+                        <div class="card-meta">
+                            <span class="meta-item">
+                                <i class="fas fa-map-marker-alt"></i> {{ signalement.location }}
+                            </span>
+                            <span class="meta-item">
+                                <i class="far fa-calendar-alt"></i>
+                                {% set days_ago = (now.date() - signalement.date.date()).days %}
+                                {% if days_ago == 0 %}Aujourd'hui
+                                {% elif days_ago == 1 %}Hier
+                                {% else %}Il y a {{ days_ago }} jours
+                                {% endif %}
+                            </span>
+                        </div>
+                        <p class="card-description">{{ signalement.description | truncate(100) }}</p>
+                        
+                        <div class="card-footer">
+                            <div class="author-info">
+                                <i class="fas fa-user-circle"></i>
+                                <span>{{ signalement.author.username }}</span>
+                            </div>
+                            {% if signalement.status == 'found' %}
+                            <span class="badge badge-status badge-found">Retrouvé</span>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
-            </div>
+            </a>
             {% endfor %}
         </div>
         
         <!-- Pagination -->
         {% if signalements.pages > 1 %}
-        <div class="pagination">
-            {% if signalements.has_prev %}
-            <a href="{{ url_for('signalements', page=signalements.prev_num, type=current_filter, search=search_query) }}" 
-               class="page-link">
-                <i class="fas fa-chevron-left"></i> Précédent
+        <nav class="pagination">
+            <a href="{{ url_for('signalements', page=signalements.prev_num, **request.args) if signalements.has_prev else '#' }}" 
+               class="page-link {% if not signalements.has_prev %}disabled{% endif %}">
+                <i class="fas fa-chevron-left"></i>
             </a>
-            {% endif %}
             
-            {% for page_num in signalements.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+            {% for page_num in signalements.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
                 {% if page_num %}
-                    {% if page_num == signalements.page %}
-                    <span class="page-link active">{{ page_num }}</span>
-                    {% else %}
-                    <a href="{{ url_for('signalements', page=page_num, type=current_filter, search=search_query) }}" 
-                       class="page-link">{{ page_num }}</a>
-                    {% endif %}
+                    <a href="{{ url_for('signalements', page=page_num, **request.args) }}" 
+                       class="page-link {% if page_num == signalements.page %}active{% endif %}">{{ page_num }}</a>
                 {% else %}
-                    <span class="page-link">...</span>
+                    <span class="page-link ellipsis">...</span>
                 {% endif %}
             {% endfor %}
             
-            {% if signalements.has_next %}
-            <a href="{{ url_for('signalements', page=signalements.next_num, type=current_filter, search=search_query) }}" 
-               class="page-link">
-                Suivant <i class="fas fa-chevron-right"></i>
+            <a href="{{ url_for('signalements', page=signalements.next_num, **request.args) if signalements.has_next else '#' }}" 
+               class="page-link {% if not signalements.has_next %}disabled{% endif %}">
+                <i class="fas fa-chevron-right"></i>
             </a>
-            {% endif %}
-        </div>
+        </nav>
         {% endif %}
         
         {% else %}
         <div class="no-results">
-            <i class="fas fa-search fa-3x"></i>
+            <div class="no-results-icon"><i class="fas fa-search"></i></div>
             <h3>Aucun signalement trouvé</h3>
-            <p>Essayez de modifier vos critères de recherche</p>
-            <a href="{{ url_for('signalements') }}" class="btn btn-primary" style="margin-top: var(--spacing-md);">
+            <p>Essayez de modifier vos critères de recherche ou de retirer les filtres.</p>
+            <a href="{{ url_for('signalements') }}" class="btn btn-primary" style="margin-top: var(--space-md);">
                 Voir tous les signalements
             </a>
         </div>

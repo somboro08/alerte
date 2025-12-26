@@ -3,239 +3,171 @@
 {% block title %}Tableau de bord - SignalAlert{% endblock %}
 
 {% block head_extra %}
-<style>
-.dashboard-header {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-    color: var(--white);
-    padding: var(--spacing-xl) 0;
-    margin-bottom: var(--spacing-xl);
-    border-radius: var(--border-radius-lg);
-}
-
-.dashboard-stats {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: var(--spacing-lg);
-    margin-bottom: var(--spacing-xl);
-}
-
-.stat-card {
-    background: var(--white);
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius);
-    text-align: center;
-    box-shadow: var(--shadow-sm);
-    transition: transform var(--transition-normal);
-}
-
-.stat-card:hover {
-    transform: translateY(-5px);
-}
-
-.stat-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin: 0 auto var(--spacing-md);
-    font-size: 1.5rem;
-}
-
-.stat-icon.primary { background: rgba(37, 99, 235, 0.1); color: var(--primary-color); }
-.stat-icon.success { background: rgba(16, 185, 129, 0.1); color: var(--secondary-color); }
-.stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: var(--warning-color); }
-.stat-icon.info { background: rgba(59, 130, 246, 0.1); color: var(--primary-light); }
-
-.stat-card h3 {
-    font-size: 2rem;
-    margin-bottom: 0.25rem;
-}
-
-.dashboard-content {
-    display: grid;
-    grid-template-columns: 2fr 1fr;
-    gap: var(--spacing-xl);
-}
-
-@media (max-width: 768px) {
-    .dashboard-content {
-        grid-template-columns: 1fr;
-    }
-}
-
-.dashboard-section {
-    background: var(--white);
-    padding: var(--spacing-lg);
-    border-radius: var(--border-radius-lg);
-    box-shadow: var(--shadow-sm);
-}
-
-.section-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-lg);
-}
-
-.report-item {
-    border-bottom: 1px solid var(--gray-light);
-    padding: var(--spacing-md) 0;
-}
-
-.report-item:last-child {
-    border-bottom: none;
-}
-
-.report-item-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: var(--spacing-xs);
-}
-
-.status-badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 50px;
-    font-size: 0.75rem;
-    font-weight: 600;
-}
-
-.status-badge.active { background: rgba(16, 185, 129, 0.1); color: var(--secondary-color); }
-.status-badge.found { background: rgba(59, 130, 246, 0.1); color: var(--primary-light); }
-
-.empty-state {
-    text-align: center;
-    padding: var(--spacing-xl);
-    color: var(--gray-color);
-}
-</style>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 
 {% block content %}
-<div class="container">
-    <!-- Dashboard Header -->
-    <div class="dashboard-header">
-        <h1><i class="fas fa-tachometer-alt"></i> Tableau de bord</h1>
-        <p>Bienvenue, {{ current_user.username }} !</p>
-    </div>
-    
-    <!-- Stats -->
-    <div class="dashboard-stats">
+<div class="container dashboard-page">
+
+    <!-- Header -->
+    <section class="dashboard-header">
+        <h1>Bonjour, {{ current_user.username }} 👋</h1>
+        <p class="lead">Heureux de vous revoir ! Voici un résumé de votre activité.</p>
+    </section>
+
+    <!-- Stats Grid -->
+    <section class="stats-grid">
+        {% set resolved_count = signalements|selectattr('status', 'equalto', 'found')|list|length %}
+        {% set active_count = signalements|length - resolved_count %}
+        {% set total_views = signalements|sum(attribute='views')|default(0) %}
+
         <div class="stat-card">
-            <div class="stat-icon primary">
+            <div class="stat-icon icon-total">
                 <i class="fas fa-bullhorn"></i>
             </div>
-            <h3>{{ signalements|length }}</h3>
-            <p>Mes signalements</p>
+            <div class="stat-info">
+                <span class="stat-number">{{ signalements|length }}</span>
+                <span class="stat-label">Signalements créés</span>
+            </div>
         </div>
-        
         <div class="stat-card">
-            <div class="stat-icon success">
+            <div class="stat-icon icon-resolved">
                 <i class="fas fa-check-circle"></i>
             </div>
-            <h3>{{ signalements|selectattr('status', 'equalto', 'found')|list|length }}</h3>
-            <p>Résolus</p>
-        </div>
-        
-        <div class="stat-card">
-            <div class="stat-icon warning">
-                <i class="fas fa-clock"></i>
+            <div class="stat-info">
+                <span class="stat-number">{{ resolved_count }}</span>
+                <span class="stat-label">Signalements résolus</span>
             </div>
-            <h3>{{ signalements|selectattr('status', 'equalto', 'active')|list|length }}</h3>
-            <p>En cours</p>
         </div>
-        
         <div class="stat-card">
-            <div class="stat-icon info">
+            <div class="stat-icon icon-active">
+                <i class="fas fa-hourglass-half"></i>
+            </div>
+            <div class="stat-info">
+                <span class="stat-number">{{ active_count }}</span>
+                <span class="stat-label">Signalements actifs</span>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-views">
                 <i class="fas fa-eye"></i>
             </div>
-            <h3>0</h3>
-            <p>Vues totales</p>
+            <div class="stat-info">
+                <span class="stat-number">{{ total_views }}</span>
+                <span class="stat-label">Vues totales</span>
+            </div>
         </div>
-    </div>
-    
-    <!-- Dashboard Content -->
-    <div class="dashboard-content">
-        <!-- Mes signalements -->
-        <div class="dashboard-section">
-            <div class="section-header">
-                <h2><i class="fas fa-list"></i> Mes signalements</h2>
-                <a href="{{ url_for('nouveau_signalement') }}" class="btn btn-primary">
-                    <i class="fas fa-plus"></i> Nouveau
-                </a>
-            </div>
-            
-            {% if signalements %}
-            <div class="reports-list">
-                {% for signalement in signalements[:5] %}
-                <div class="report-item">
-                    <div class="report-item-header">
-                        <h4 style="margin: 0;">{{ signalement.title }}</h4>
-                        <span class="status-badge {{ signalement.status }}">
-                            {{ 'Actif' if signalement.status == 'active' else 'Résolu' }}
-                        </span>
-                    </div>
-                    
-                    <p style="color: var(--gray-color); margin: var(--spacing-xs) 0;">
-                        <i class="fas fa-map-marker-alt"></i> {{ signalement.location }} • 
-                        <i class="far fa-calendar"></i> {{ signalement.date.strftime('%d/%m/%Y') }}
-                    </p>
-                    
-                    <div class="report-item-actions">
-                        <a href="{{ url_for('signalement_detail', id=signalement.id) }}" class="btn btn-outline btn-sm">
-                            <i class="fas fa-eye"></i> Voir
-                        </a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-            
-            {% if signalements|length > 5 %}
-            <div style="text-align: center; margin-top: var(--spacing-md);">
-                <a href="{{ url_for('signalements') }}?user={{ current_user.id }}" class="btn btn-outline">
-                    Voir tous mes signalements
-                </a>
-            </div>
-            {% endif %}
-            
-            {% else %}
-            <div class="empty-state">
-                <i class="fas fa-inbox fa-2x"></i>
-                <h3>Aucun signalement</h3>
-                <p>Vous n'avez pas encore créé de signalement</p>
-                <a href="{{ url_for('nouveau_signalement') }}" class="btn btn-primary" style="margin-top: var(--spacing-md);">
-                    Créer mon premier signalement
-                </a>
-            </div>
-            {% endif %}
-        </div>
+    </section>
+
+    <!-- Main Content Grid -->
+    <div class="dashboard-main-grid">
         
-        <!-- Actions rapides -->
-        <div class="dashboard-section">
-            <h2><i class="fas fa-bolt"></i> Actions rapides</h2>
-            
-            <div style="display: flex; flex-direction: column; gap: var(--spacing-md);">
-                <a href="{{ url_for('nouveau_signalement') }}" class="btn btn-primary">
-                    <i class="fas fa-plus-circle"></i> Nouveau signalement
-                </a>
-                
-                <a href="{{ url_for('profile') }}" class="btn btn-outline">
-                    <i class="fas fa-user"></i> Modifier mon profil
-                </a>
-                
-                <a href="{{ url_for('signalements') }}" class="btn btn-outline">
-                    <i class="fas fa-search"></i> Rechercher des signalements
+        <!-- Recent Reports -->
+        <section class="recent-reports card">
+            <div class="card-header">
+                <h2><i class="fas fa-list-ul"></i> Mes derniers signalements</h2>
+                <a href="{{ url_for('nouveau_signalement') }}" class="btn btn-primary btn-small">
+                    <i class="fas fa-plus"></i> Créer
                 </a>
             </div>
-            
-            <!-- Statistiques -->
-            <div style="margin-top: var(--spacing-xl); padding-top: var(--spacing-md); border-top: 1px solid var(--gray-light);">
-                <h3><i class="fas fa-chart-line"></i> Statistiques</h3>
-                <p>Membre depuis : {{ current_user.created_at.strftime('%d/%m/%Y') }}</p>
-     {% set active_count = signalements|selectattr('status', 'equalto', 'active')|list|length %}
-<p>Signalements actifs : {{ active_count }}</p>  </div>
+            <div class="card-body">
+                {% if signalements %}
+                    <div class="reports-list">
+                        {% for signalement in signalements[:3] %}
+                        <div class="report-list-item">
+                            <div class="item-info">
+                                <span class="badge badge-type badge-{{ signalement.type }}">{{ signalement.type }}</span>
+                                <a href="{{ url_for('signalement_detail', id=signalement.id) }}" class="item-title">{{ signalement.title }}</a>
+                                <span class="item-date">
+                                    {% set days_ago = (now.date() - signalement.date.date()).days %}
+                                    Il y a {{ days_ago }} jour{% if days_ago > 1 %}s{% endif %}
+                                </span>
+                            </div>
+                            <div class="item-actions">
+                                {% if signalement.status == 'found' %}
+                                <span class="badge badge-status badge-found">Retrouvé</span>
+                                {% else %}
+                                <span class="badge badge-status badge-active">Actif</span>
+                                {% endif %}
+                                <a href="{{ url_for('signalement_detail', id=signalement.id) }}" class="btn btn-outline btn-small">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% if signalements|length > 3 %}
+                    <div class="view-all-link">
+                        <a href="{{ url_for('signalements') }}?user={{ current_user.id }}">Voir tous mes signalements</a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+                        <h3>Aucun signalement pour l'instant</h3>
+                        <p>Créez votre premier signalement pour commencer.</p>
+                        <a href="{{ url_for('nouveau_signalement') }}" class="btn btn-primary">Créer un signalement</a>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
+
+        <!-- Stats Visual -->
+        <section class="stats-visual card">
+            <div class="card-header">
+                <h2><i class="fas fa-chart-pie"></i> Répartition des statuts</h2>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </section>
     </div>
+
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const resolvedCount = {{ signalements|selectattr('status', 'equalto', 'found')|list|length }};
+    const activeCount = {{ (signalements|length) - (signalements|selectattr('status', 'equalto', 'found')|list|length) }};
+
+    if (document.getElementById('statusChart')) {
+        const ctx = document.getElementById('statusChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Actifs', 'Résolus'],
+                datasets: [{
+                    label: 'Statut des signalements',
+                    data: [activeCount, resolvedCount],
+                    backgroundColor: [
+                        '#f59e0b', // --warning-color
+                        '#10b981'  // --secondary-color
+                    ],
+                    borderColor: [
+                        '#ffffff',
+                        '#ffffff'
+                    ],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
 {% endblock %}

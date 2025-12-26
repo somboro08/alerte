@@ -1,0 +1,211 @@
+/* ======================================= */
+/* ===== SIGNALEMENT DETAIL PAGE STYLES ==== */
+/* ======================================= */
+
+.signalement-detail-page {
+    padding: var(--space-8) 0;
+}
+
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-6);
+    color: var(--dark-medium);
+    font-weight: 500;
+}
+.back-link:hover {
+    color: var(--primary-color);
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+}
+
+@media (min-width: 1024px) {
+    .detail-grid {
+        grid-template-columns: 2fr 1fr;
+    }
+}
+
+/* ===== MAIN CONTENT ===== */
+.main-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.detail-header {
+    margin-bottom: var(--space-4);
+}
+
+.badge-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
+}
+
+.detail-title {
+    font-size: var(--text-4xl);
+    font-weight: 800;
+    margin-bottom: var(--space-4);
+}
+
+.meta-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-4);
+    color: var(--gray-color);
+    font-size: var(--text-sm);
+}
+
+.meta-info .meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.detail-description, .detail-contact {
+    padding: var(--space-6);
+}
+
+.detail-description h2, .detail-contact h2 {
+    font-size: var(--text-xl);
+    font-weight: 700;
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.detail-description p {
+    line-height: 1.7;
+}
+
+.additional-info {
+    margin-top: var(--space-4);
+    padding: var(--space-4);
+    background: var(--gray-ultralight);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-light);
+}
+
+.additional-info h4 {
+    font-size: var(--text-base);
+    font-weight: 600;
+    margin-bottom: var(--space-2);
+}
+
+.contact-methods {
+    display: flex;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
+
+/* ===== SIDEBAR ===== */
+.sidebar-sticky {
+    position: sticky;
+    top: calc(var(--space-8) + 64px); /* 64px is header height */
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.sidebar-card {
+    padding: var(--space-6);
+}
+
+.sidebar-image-container {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+.sidebar-image {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+}
+
+.sidebar-image-placeholder {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gray-ultralight);
+    color: var(--gray-color);
+    font-size: 2.5rem;
+}
+
+.sidebar-card h3 {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    margin-bottom: var(--space-4);
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.key-details-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+}
+
+.key-details-list li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    font-size: var(--text-sm);
+}
+
+.key-details-list i {
+    color: var(--primary-color);
+    width: 20px;
+    text-align: center;
+}
+
+.reward {
+    font-weight: 700;
+    color: var(--secondary-dark);
+}
+
+.social-share {
+    display: flex;
+    gap: var(--space-2);
+    margin-bottom: var(--space-4);
+}
+
+.social-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 40px;
+    border-radius: var(--radius-md);
+    color: var(--white);
+    transition: opacity var(--transition-fast);
+}
+.social-btn:hover {
+    opacity: 0.8;
+}
+.social-btn.facebook { background: #1877F2; }
+.social-btn.twitter { background: #1DA1F2; }
+.social-btn.whatsapp { background: #25D366; }
+.social-btn.email { background: var(--gray-color); }
+
+.share-link-group {
+    display: flex;
+}
+.share-link-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+.share-link-group .copy-btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}

@@ -14,7 +14,7 @@
     
     <!-- Style principal -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/filter.css') }}">
+
     {% block head_extra %}{% endblock %}
 </head>
 <body>
@@ -32,15 +32,15 @@
             
             <nav class="main-nav" id="mainNav">
                 <ul class="nav-links">
-                    <li><a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}">Accueil</a></li>
-                    <li><a href="{{ url_for('signalements') }}" class="{% if request.endpoint == 'signalements' %}active{% endif %}">Signalements</a></li>
+                    <li><a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}"><i class="fas fa-home"></i> Accueil</a></li>
+                    <li><a href="{{ url_for('signalements') }}" class="{% if request.endpoint == 'signalements' %}active{% endif %}"><i class="fas fa-bullhorn"></i> Signalements</a></li>
                     
                     {% if current_user.is_authenticated %}
-                    <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}">Tableau de bord</a></li>
-                    <li><a href="{{ url_for('nouveau_signalement') }}" class="{% if request.endpoint == 'nouveau_signalement' %}active{% endif %}">Nouveau</a></li>
+                    <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a></li>
+                    <li><a href="{{ url_for('nouveau_signalement') }}" class="{% if request.endpoint == 'nouveau_signalement' %}active{% endif %}"><i class="fas fa-plus-circle"></i> Nouveau</a></li>
                     {% endif %}
                     
-                    <li><a href="#about">À propos</a></li>
+                    <li><a href="#about"><i class="fas fa-info-circle"></i> À propos</a></li>
                 </ul>
                 
                 <div class="user-actions">

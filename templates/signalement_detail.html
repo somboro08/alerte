@@ -3,539 +3,155 @@
 {% block title %}{{ signalement.title }} - SignalAlert{% endblock %}
 
 {% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/signalement_detail.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="container signalement-detail">
-    <!-- Navigation retour -->
-    <a href="{{ url_for('signalements') }}" class="back-nav">
+<div class="container signalement-detail-page">
+    
+    <a href="{{ url_for('signalements') }}" class="back-link">
         <i class="fas fa-arrow-left"></i> Retour aux signalements
     </a>
 
-    <!-- Header -->
-    <div class="signalement-header">
-        <div class="header-top">
-            <div class="title-section">
-                <h1 class="signalement-title">{{ signalement.title }}</h1>
+    <div class="detail-grid">
+        <!-- Main Content -->
+        <main class="main-content">
+            <section class="detail-header">
                 <div class="badge-container">
-                    <span class="status-badge badge-{{ signalement.type }}">
-                        {% if signalement.type == 'lost' %}
-                            <i class="fas fa-search"></i> Objet perdu
-                        {% elif signalement.type == 'missing' %}
-                            <i class="fas fa-user-missing"></i> Personne disparue
-                        {% else %}
-                            <i class="fas fa-shield-alt"></i> Objet volé
+                    <span class="badge badge-type badge-{{ signalement.type }}">
+                        {% if signalement.type == 'lost' %}Perdu
+                        {% elif signalement.type == 'missing' %}Disparu
+                        {% else %}Volé{% endif %}
+                    </span>
+                    {% if signalement.status == 'found' %}
+                    <span class="badge badge-status badge-found">Retrouvé</span>
+                    {% endif %}
+                </div>
+                <h1 class="detail-title">{{ signalement.title }}</h1>
+                <div class="meta-info">
+                    <span class="meta-item">
+                        <i class="fas fa-map-marker-alt"></i> {{ signalement.location }}
+                    </span>
+                    <span class="meta-item">
+                        <i class="far fa-calendar-alt"></i>
+                        {% set days_ago = (now.date() - signalement.date.date()).days %}
+                        {% if days_ago == 0 %}Aujourd'hui
+                        {% elif days_ago == 1 %}Hier
+                        {% else %}Il y a {{ days_ago }} jours
                         {% endif %}
                     </span>
-                    
-                    {% if signalement.status == 'found' %}
-                    <span class="status-badge badge-found badge-pulse">
-                        <i class="fas fa-check-circle"></i> Retrouvé
+                    <span class="meta-item">
+                        <i class="fas fa-eye"></i> {{ signalement.views or 0 }} vues
                     </span>
-                    {% else %}
-                    <span class="status-badge badge-active">
-                        <i class="fas fa-circle"></i> Actif
-                    </span>
-                    {% endif %}
-                    
-                    {% if signalement.reward %}
-                    <span class="status-badge" style="background: #f39c12; color: white;">
-                        <i class="fas fa-gift"></i> Récompense
-                    </span>
-                    {% endif %}
                 </div>
-            </div>
-            
-            <div class="metadata">
-                <div style="color: var(--gray-color); font-size: 0.9rem;">
-                    <i class="far fa-clock"></i> Publié le {{ signalement.created_at.strftime('%d/%m/%Y à %H:%M') }}
-                </div>
-                <div style="color: var(--gray-color); font-size: 0.9rem; margin-top: var(--spacing-xs);">
-                    <i class="fas fa-eye"></i> {{ signalement.views or 0 }} vues
-                </div>
-            </div>
-        </div>
-        
-        <!-- Image principale -->
-        <div class="image-container">
-            {% if signalement.image_url %}
-            <img src="/static/uploads/images/{{ signalement.image_url }}" 
-                 alt="{{ signalement.title }}" 
-                 class="signalement-image"
-                 loading="lazy">
-            {% else %}
-            <div class="image-placeholder">
-                <div style="text-align: center;">
-                    <i class="fas fa-camera"></i>
-                    <p>Aucune image disponible</p>
-                </div>
-            </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- Grid d'informations -->
-    <div class="signalement-info-grid">
-        <div class="info-card">
-            <h4><i class="fas fa-map-marker-alt"></i> Localisation</h4>
-            <p>{{ signalement.location }}</p>
-            {% if signalement.lat and signalement.lng %}
-            <small style="color: var(--gray-color); margin-top: var(--spacing-xs); display: block;">
-                <i class="fas fa-crosshairs"></i> Coordonnées GPS disponibles
-            </small>
-            {% endif %}
-        </div>
-        
-        <div class="info-card">
-            <h4><i class="far fa-calendar-alt"></i> Date</h4>
-            <p>{{ signalement.date.strftime('%A %d %B %Y') }}</p>
-            {% set days_ago = (now.date() - signalement.date.date()).days %}
-            <small style="color: var(--gray-color); margin-top: var(--spacing-xs); display: block;">
-                Il y a {{ days_ago }} jour{% if days_ago > 1 %}s{% endif %}
-            </small>
-        </div>
-        
-        <div class="info-card">
-            <h4><i class="fas fa-tags"></i> Catégorie</h4>
-            <p>{{ signalement.category or 'Non spécifié' }}</p>
-        </div>
-        
-        <div class="info-card">
-            <h4><i class="fas fa-user-circle"></i> Auteur</h4>
-            <p>{{ signalement.author.username }}</p>
-            <small style="color: var(--gray-color); margin-top: var(--spacing-xs); display: block;">
-                <i class="fas fa-star"></i> {{ signalement.author.signalements|length }} signalements
-            </small>
-        </div>
-        
-        {% if signalement.reward %}
-        <div class="info-card">
-            <h4><i class="fas fa-award"></i> Récompense</h4>
-            <p style="color: #f39c12; font-weight: bold;">{{ signalement.reward }}</p>
-        </div>
-        {% endif %}
-        
-        <div class="info-card">
-            <h4><i class="fas fa-info-circle"></i> Identification</h4>
-            <p>{{ signalement.identification or 'Non spécifié' }}</p>
-        </div>
-    </div>
-    
-    <!-- Description détaillée -->
-    <div class="signalement-content">
-        <h2><i class="fas fa-align-left"></i> Description détaillée</h2>
-        <div class="description-text">
-            {{ signalement.description }}
-        </div>
-        
-        {% if signalement.additional_info %}
-        <div style="margin-top: var(--spacing-lg); padding: var(--spacing-md); background: var(--gray-lightest); border-radius: var(--border-radius);">
-            <h4 style="color: var(--gray-color); margin-bottom: var(--spacing-sm);">
-                <i class="fas fa-sticky-note"></i> Informations supplémentaires
-            </h4>
-            <p>{{ signalement.additional_info }}</p>
-        </div>
-        {% endif %}
-    </div>
-    
-    <!-- Section contact -->
-    <div class="contact-section">
-        <h3><i class="fas fa-address-card"></i> Contact</h3>
-        <div class="contact-info">
-            <div class="contact-details">
-                <div class="contact-name">{{ signalement.contact }}</div>
-                {% if signalement.phone %}
-                <div class="contact-method">
-                    <i class="fas fa-phone"></i> {{ signalement.phone }}
-                </div>
-                {% endif %}
-                {% if signalement.email %}
-                <div class="contact-method">
-                    <i class="fas fa-envelope"></i> {{ signalement.email }}
-                </div>
-                {% endif %}
-            </div>
-            <div class="contact-actions">
-                {% if signalement.phone %}
-                <a href="tel:{{ signalement.phone }}" class="contact-btn">
-                    <i class="fas fa-phone"></i> Appeler
-                </a>
-                {% endif %}
-                <button class="contact-btn" id="contactBtn">
-                    <i class="fas fa-envelope"></i> Message
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Section partage -->
-    <div class="share-section">
-        <h3><i class="fas fa-share-alt"></i> Partager ce signalement</h3>
-        <p style="color: var(--gray-color); margin-bottom: var(--spacing-lg);">
-            Aidez à diffuser l'information en partageant ce signalement sur vos réseaux.
-        </p>
-        
-        <div class="qr-code-container">
-            {% if signalement.qr_code_url %}
-            <img src="/static/{{ signalement.qr_code_url }}" 
-                 alt="QR Code du signalement" 
-                 class="qr-code">
-            <p style="color: var(--gray-color); margin-top: var(--spacing-sm); font-size: 0.9rem;">
-                Scannez pour accéder au signalement
-            </p>
-            {% else %}
-            <div style="padding: var(--spacing-xl); background: var(--gray-lightest); border-radius: var(--border-radius);">
-                <i class="fas fa-qrcode" style="font-size: 3rem; color: var(--gray-color);"></i>
-                <p>QR Code en génération...</p>
-            </div>
-            {% endif %}
-        </div>
-        
-        <div class="share-link-group">
-            <label class="form-label">Lien du signalement :</label>
-            <div class="share-link-input">
-                <input type="text" 
-                       id="shareLink" 
-                       class="form-control" 
-                       value="{{ url_for('signalement_detail', id=signalement.id, _external=True) }}" 
-                       readonly>
-                <button class="btn btn-primary copy-btn" id="copyBtn">
-                    <i class="fas fa-copy"></i> Copier
-                </button>
-            </div>
-        </div>
-        
-        <div class="social-share">
-            <a href="https://www.facebook.com/sharer/sharer.php?u={{ url_for('signalement_detail', id=signalement.id, _external=True) }}" 
-               target="_blank" 
-               class="social-btn facebook">
-                <i class="fab fa-facebook-f"></i> Facebook
-            </a>
-            <a href="https://twitter.com/intent/tweet?url={{ url_for('signalement_detail', id=signalement.id, _external=True) }}&text={{ signalement.title }}" 
-               target="_blank" 
-               class="social-btn twitter">
-                <i class="fab fa-twitter"></i> Twitter
-            </a>
-            <a href="https://api.whatsapp.com/send?text={{ signalement.title }}%20{{ url_for('signalement_detail', id=signalement.id, _external=True) }}" 
-               target="_blank" 
-               class="social-btn whatsapp">
-                <i class="fab fa-whatsapp"></i> WhatsApp
-            </a>
-        </div>
-    </div>
-    
-    <!-- Actions principales -->
-    <div class="signalement-actions">
-        <button class="btn btn-primary action-btn" id="mainContactBtn">
-            <i class="fas fa-envelope"></i> Contacter
-        </button>
-        
-        <button class="btn btn-outline action-btn" id="mainShareBtn">
-            <i class="fas fa-share-alt"></i> Partager
-        </button>
+            </section>
 
-        <a href="{{ url_for('download_signalement_pdf', id=signalement.id) }}" 
-           target="_blank" 
-           class="btn btn-outline action-btn">
-            <i class="fas fa-file-pdf"></i> PDF
-        </a>
+            <section class="detail-description card">
+                <h2><i class="fas fa-align-left"></i> Description</h2>
+                <p>{{ signalement.description | nl2br }}</p>
+                {% if signalement.additional_info %}
+                <div class="additional-info">
+                    <h4>Informations supplémentaires</h4>
+                    <p>{{ signalement.additional_info }}</p>
+                </div>
+                {% endif %}
+            </section>
 
-        <a href="{{ url_for('download_signalement_pdf', id=signalement.id) }}" 
-           target="_blank" 
-           class="btn btn-outline action-btn">
-            <i class="fas fa-print"></i> Imprimer
-        </a>
-        
-        {% if current_user.is_authenticated and current_user.id == signalement.user_id %}
-        <a href="{{ url_for('edit_signalement', id=signalement.id) }}" 
-           class="btn btn-outline action-btn">
-            <i class="fas fa-edit"></i> Modifier
-        </a>
-        
-        {% if signalement.status == 'active' %}
-        <button class="btn btn-success action-btn" id="markFoundBtn">
-            <i class="fas fa-check-circle"></i> Marquer retrouvé
-        </button>
-        {% endif %}
-        {% endif %}
-        
-        {% if current_user.is_authenticated and current_user.is_admin %}
-        <button class="btn btn-danger action-btn" id="deleteBtn">
-            <i class="fas fa-trash"></i> Supprimer
-        </button>
-        {% endif %}
+            <section class="detail-contact card">
+                <h2><i class="fas fa-address-book"></i> Contacter le déclarant</h2>
+                <p>Si vous avez des informations, veuillez contacter {{ signalement.author.username }}.</p>
+                <div class="contact-methods">
+                    {% if signalement.phone %}
+                    <a href="tel:{{ signalement.phone }}" class="btn btn-secondary">
+                        <i class="fas fa-phone"></i> Appeler
+                    </a>
+                    {% endif %}
+                    <a href="mailto:{{ signalement.email }}" class="btn btn-secondary">
+                        <i class="fas fa-envelope"></i> Envoyer un email
+                    </a>
+                </div>
+            </section>
+
+        </main>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-sticky">
+                <div class="sidebar-card card">
+                    <div class="card-image-container">
+                        {% if signalement.image_url %}
+                        <img src="/static/uploads/images/{{ signalement.image_url }}" alt="{{ signalement.title }}" class="sidebar-image">
+                        {% else %}
+                        <div class="sidebar-image-placeholder">
+                            <i class="fas fa-image"></i>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="sidebar-card card">
+                    <h3><i class="fas fa-info-circle"></i> Détails clés</h3>
+                    <ul class="key-details-list">
+                        <li>
+                            <i class="fas fa-user"></i>
+                            <strong>Auteur:</strong> {{ signalement.author.username }}
+                        </li>
+                        <li>
+                            <i class="fas fa-tag"></i>
+                            <strong>Catégorie:</strong> {{ signalement.category or 'Non spécifié' }}
+                        </li>
+                        <li>
+                            <i class="fas fa-calendar-day"></i>
+                            <strong>Date de l'évènement:</strong> {{ signalement.date.strftime('%d %B %Y') }}
+                        </li>
+                        {% if signalement.reward %}
+                        <li>
+                            <i class="fas fa-award"></i>
+                            <strong>Récompense:</strong> <span class="reward">{{ signalement.reward }}</span>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+                
+                <div class="sidebar-card card">
+                    <h3><i class="fas fa-share-alt"></i> Partager</h3>
+                    <div class="social-share">
+                        <a href="https://www.facebook.com/sharer/sharer.php?u={{ request.url }}" target="_blank" class="social-btn facebook"><i class="fab fa-facebook-f"></i></a>
+                        <a href="https://twitter.com/intent/tweet?url={{ request.url }}&text={{ signalement.title }}" target="_blank" class="social-btn twitter"><i class="fab fa-twitter"></i></a>
+                        <a href="https://api.whatsapp.com/send?text={{ signalement.title }} {{ request.url }}" target="_blank" class="social-btn whatsapp"><i class="fab fa-whatsapp"></i></a>
+                        <a href="mailto:?subject={{ signalement.title }}&body={{ request.url }}" class="social-btn email"><i class="fas fa-envelope"></i></a>
+                    </div>
+                    <div class="share-link-group">
+                        <input type="text" id="shareLink" class="form-control" value="{{ request.url }}" readonly>
+                        <button class="btn btn-primary copy-btn" id="copyBtn"><i class="fas fa-copy"></i></button>
+                    </div>
+                </div>
+            </div>
+        </aside>
     </div>
-    
-    <!-- Formulaire de contact -->
-    <div class="contact-form" id="contactForm">
-        <div class="form-header">
-            <h3><i class="fas fa-paper-plane"></i> Envoyer un message</h3>
-            <button class="close-form" id="closeForm">&times;</button>
-        </div>
-        
-        <form id="messageForm">
-            <div class="form-group">
-                <label class="form-label">Votre message</label>
-                <textarea class="form-control" 
-                          rows="5" 
-                          placeholder="Bonjour, je pense avoir des informations concernant votre signalement..."
-                          required></textarea>
-            </div>
-            
-            <div class="form-group">
-                <label class="form-label">Vos coordonnées (optionnel)</label>
-                <input type="text" 
-                       class="form-control" 
-                       placeholder="Nom / Téléphone / Email">
-            </div>
-            
-            <div style="display: flex; gap: var(--spacing-md); margin-top: var(--spacing-lg);">
-                <button type="submit" class="btn btn-primary">
-                    <span id="submitText">Envoyer le message</span>
-                    <span id="submitLoading" style="display: none;">
-                        <span class="loading"></span> Envoi en cours...
-                    </span>
-                </button>
-                <button type="button" class="btn btn-outline" id="cancelBtn">
-                    Annuler
-                </button>
-            </div>
-        </form>
-    </div>
+
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Éléments DOM
-    const contactBtn = document.getElementById('contactBtn');
-    const mainContactBtn = document.getElementById('mainContactBtn');
-    const contactForm = document.getElementById('contactForm');
-    const closeForm = document.getElementById('closeForm');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const shareBtn = document.getElementById('mainShareBtn');
     const copyBtn = document.getElementById('copyBtn');
     const shareLinkInput = document.getElementById('shareLink');
-    const markFoundBtn = document.getElementById('markFoundBtn');
-    const deleteBtn = document.getElementById('deleteBtn');
-    const messageForm = document.getElementById('messageForm');
-    const submitText = document.getElementById('submitText');
-    const submitLoading = document.getElementById('submitLoading');
-    
-    // Ouvrir formulaire de contact
-    function openContactForm() {
-        contactForm.classList.add('active');
-        document.body.style.overflow = 'hidden';
-        window.scrollTo({
-            top: contactForm.offsetTop - 100,
-            behavior: 'smooth'
-        });
-    }
-    
-    // Fermer formulaire de contact
-    function closeContactForm() {
-        contactForm.classList.remove('active');
-        document.body.style.overflow = '';
-        messageForm.reset();
-    }
-    
-    // Gestionnaires d'événements pour le formulaire
-    if (contactBtn) contactBtn.addEventListener('click', openContactForm);
-    if (mainContactBtn) mainContactBtn.addEventListener('click', openContactForm);
-    if (closeForm) closeForm.addEventListener('click', closeContactForm);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeContactForm);
-    
-    // Fermer en cliquant en dehors
-    document.addEventListener('click', function(e) {
-        if (contactForm.classList.contains('active') && 
-            !contactForm.contains(e.target) && 
-            e.target !== contactBtn && 
-            e.target !== mainContactBtn &&
-            !contactBtn.contains(e.target) &&
-            !mainContactBtn.contains(e.target)) {
-            closeContactForm();
-        }
-    });
-    
-    // Copier le lien
+
     if (copyBtn) {
-        copyBtn.addEventListener('click', async function() {
+        copyBtn.addEventListener('click', async () => {
             try {
                 await navigator.clipboard.writeText(shareLinkInput.value);
-                
-                // Feedback visuel
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copié !';
-                copyBtn.classList.remove('btn-primary');
-                copyBtn.classList.add('btn-success');
-                
+                const originalIcon = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<i class="fas fa-check"></i>';
                 setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                    copyBtn.classList.remove('btn-success');
-                    copyBtn.classList.add('btn-primary');
+                    copyBtn.innerHTML = originalIcon;
                 }, 2000);
             } catch (err) {
-                // Fallback pour les anciens navigateurs
-                shareLinkInput.select();
-                document.execCommand('copy');
-                
-                // Feedback visuel
-                const originalText = copyBtn.innerHTML;
-                copyBtn.innerHTML = '<i class="fas fa-check"></i> Copié !';
-                
-                setTimeout(() => {
-                    copyBtn.innerHTML = originalText;
-                }, 2000);
+                console.error('Failed to copy: ', err);
             }
         });
-    }
-    
-    // Partager
-    if (shareBtn) {
-        shareBtn.addEventListener('click', async function() {
-            const shareData = {
-                title: '{{ signalement.title }}',
-                text: '{{ signalement.description[:100] }}...',
-                url: shareLinkInput.value
-            };
-            
-            try {
-                if (navigator.share) {
-                    await navigator.share(shareData);
-                } else {
-                    // Fallback: copier le lien
-                    await navigator.clipboard.writeText(shareLinkInput.value);
-                    alert('Lien copié dans le presse-papier !');
-                }
-            } catch (err) {
-                console.log('Erreur de partage:', err);
-            }
-        });
-    }
-    
-    // Marquer comme retrouvé
-    if (markFoundBtn) {
-        markFoundBtn.addEventListener('click', async function() {
-            if (confirm('Voulez-vous vraiment marquer ce signalement comme retrouvé ?')) {
-                try {
-                    const response = await fetch('/api/signalements/{{ signalement.id }}/found', {
-                        method: 'PUT',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': '{{ csrf_token() }}'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        location.reload();
-                    } else {
-                        alert('Erreur lors de la mise à jour');
-                    }
-                } catch (error) {
-                    console.error('Erreur:', error);
-                    alert('Erreur de connexion');
-                }
-            }
-        });
-    }
-    
-    // Supprimer le signalement
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', function() {
-            if (confirm('Voulez-vous vraiment supprimer ce signalement ? Cette action est irréversible.')) {
-                fetch('/api/signalements/{{ signalement.id }}', {
-                    method: 'DELETE',
-                    headers: {
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        window.location.href = '{{ url_for("signalements") }}';
-                    } else {
-                        alert('Erreur lors de la suppression');
-                    }
-                })
-                .catch(error => {
-                    console.error('Erreur:', error);
-                    alert('Erreur de connexion');
-                });
-            }
-        });
-    }
-    
-    // Envoyer un message
-    if (messageForm) {
-        messageForm.addEventListener('submit', async function(e) {
-            e.preventDefault();
-            
-            const formData = {
-                message: this.querySelector('textarea').value,
-                contact: this.querySelector('input[type="text"]').value,
-                signalement_id: {{ signalement.id }}
-            };
-            
-            // Afficher l'indicateur de chargement
-            submitText.style.display = 'none';
-            submitLoading.style.display = 'inline';
-            
-            try {
-                const response = await fetch('/api/messages', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(formData)
-                });
-                
-                if (response.ok) {
-                    alert('Message envoyé avec succès !');
-                    closeContactForm();
-                } else {
-                    const error = await response.json();
-                    alert(error.message || 'Erreur lors de l\'envoi du message');
-                }
-            } catch (error) {
-                console.error('Erreur:', error);
-                alert('Erreur de connexion');
-            } finally {
-                // Cacher l'indicateur de chargement
-                submitText.style.display = 'inline';
-                submitLoading.style.display = 'none';
-            }
-        });
-    }
-    
-    // Animation au défilement
-    const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
-    };
-    
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.classList.add('animate-in');
-            }
-        });
-    }, observerOptions);
-    
-    // Observer les éléments à animer
-    document.querySelectorAll('.info-card, .signalement-content, .contact-section, .share-section').forEach(el => {
-        observer.observe(el);
-    });
-    
-    // Gérer les dates en JavaScript si nécessaire
-    const now = new Date();
-    const signalementDate = new Date('{{ signalement.date }}');
-    const daysDiff = Math.floor((now - signalementDate) / (1000 * 60 * 60 * 24));
-    
-    // Mettre à jour le compteur de jours si présent dans le DOM
-    const daysAgoElement = document.querySelector('.days-ago');
-    if (daysAgoElement) {
-        daysAgoElement.textContent = `Il y a ${daysDiff} jour${daysDiff > 1 ? 's' : ''}`;
     }
 });
 </script>
