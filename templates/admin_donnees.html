@@ -1,103 +1,154 @@
 {% extends "base.html" %}
 
-{% block title %}Données - SignalAlert{% endblock %}
+{% block title %}Admin Dashboard - SignalAlert{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<style>
+    .admin-dashboard .nav-tabs {
+        margin-bottom: 2rem;
+    }
+    .admin-dashboard .nav-link {
+        color: #007bff;
+    }
+    .admin-dashboard .nav-link.active {
+        color: #495057;
+        background-color: #fff;
+        border-color: #dee2e6 #dee2e6 #fff;
+    }
+    .table-actions .btn {
+        margin-right: 5px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="container">
-    <h1>Données de l'application</h1>
-    
-    <h2>Utilisateurs ({{ users|length }})</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Email</th>
-                <th>Créé le</th>
-                <th>Signalements</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in users %}
-            <tr>
-                <td>{{ user.id }}</td>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
-                <td>{{ user.signalements|length }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    
-    <h2>Signalements ({{ signalements|length }})</h2>
-    <table class="table">
-        <thead>
-            <tr>
-                <th>ID</th>
-                <th>Titre</th>
-                <th>Type</th>
-                <th>Lieu</th>
-                <th>Date</th>
-                <th>Statut</th>
-                <th>Auteur</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for s in signalements %}
-            <tr>
-                <td>{{ s.id }}</td>
-                <td>{{ s.title }}</td>
-                <td>
-                    <span class="badge badge-{{ s.type }}">
-                        {% if s.type == 'lost' %}Perdu
-                        {% elif s.type == 'missing' %}Disparu
-                        {% else %}Volé{% endif %}
-                    </span>
-                </td>
-                <td>{{ s.location }}</td>
-                <td>{{ s.date.strftime('%d/%m/%Y') }}</td>
-                <td>
-                    <span class="badge {% if s.status == 'active' %}badge-success{% else %}badge-secondary{% endif %}">
-                        {{ 'Actif' if s.status == 'active' else 'Résolu' }}
-                    </span>
-                </td>
-                <td>{{ s.author.username if s.author else 'Anonyme' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    
-    <h2>Statistiques</h2>
-    <div class="row">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Signalements actifs</h5>
-                    <p class="card-text display-4">
-                        {{ signalements|selectattr('status', 'equalto', 'active')|list|length }}
-                    </p>
-                </div>
+<div class="container admin-dashboard">
+    <div class="page-header">
+        <h1><i class="fas fa-user-shield"></i> Admin Dashboard</h1>
+    </div>
+
+    <!-- Nav tabs -->
+    <ul class="nav nav-tabs" id="adminTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab" aria-controls="users" aria-selected="true">Utilisateurs ({{ users|length }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="signalements-tab" data-bs-toggle="tab" data-bs-target="#signalements" type="button" role="tab" aria-controls="signalements" aria-selected="false">Signalements ({{ signalements|length }})</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="comments-tab" data-bs-toggle="tab" data-bs-target="#comments" type="button" role="tab" aria-controls="comments" aria-selected="false">Commentaires ({{ all_comments|length }})</button>
+        </li>
+    </ul>
+
+    <!-- Tab panes -->
+    <div class="tab-content" id="adminTabContent">
+        <!-- Users Tab -->
+        <div class="tab-pane fade show active" id="users" role="tabpanel" aria-labelledby="users-tab">
+            <h2>Gérer les utilisateurs</h2>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.is_active %}
+                                    <span class="badge bg-success">Actif</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Inactif</span>
+                                {% endif %}
+                            </td>
+                            <td class="table-actions">
+                                <a href="#" class="btn btn-warning">
+                                    {{ 'Désactiver' if user.is_active else 'Activer' }}
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Signalements résolus</h5>
-                    <p class="card-text display-4">
-                        {{ signalements|selectattr('status', 'equalto', 'found')|list|length }}
-                    </p>
-                </div>
+
+        <!-- Signalements Tab -->
+        <div class="tab-pane fade" id="signalements" role="tabpanel" aria-labelledby="signalements-tab">
+            <h2>Gérer les signalements</h2>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Titre</th>
+                            <th>Auteur</th>
+                            <th>Statut</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in signalements %}
+                        <tr>
+                            <td>{{ s.id }}</td>
+                            <td><a href="{{ url_for('signalement_detail', id=s.id) }}">{{ s.title }}</a></td>
+                            <td>{{ s.author.username }}</td>
+                            <td>{{ s.status }}</td>
+                            <td class="table-actions">
+                                <a href="#" class="btn btn-danger">Supprimer</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Utilisateurs actifs</h5>
-                    <p class="card-text display-4">{{ users|length }}</p>
-                </div>
+
+        <!-- Comments Tab -->
+        <div class="tab-pane fade" id="comments" role="tabpanel" aria-labelledby="comments-tab">
+            <h2>Gérer les commentaires</h2>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Contenu</th>
+                            <th>Auteur</th>
+                            <th>Signalement</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for comment in all_comments %}
+                        <tr>
+                            <td>{{ comment.id }}</td>
+                            <td>{{ comment.content|truncate(80) }}</td>
+                            <td>{{ comment.author.username }}</td>
+                            <td><a href="{{ url_for('signalement_detail', id=comment.signalement_id) }}">{{ comment.signalement.title|truncate(30) }}</a></td>
+                            <td class="table-actions">
+                                <a href="#" class="btn btn-danger">Supprimer</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

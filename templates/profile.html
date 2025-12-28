@@ -4,6 +4,66 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
+<style>
+    .profile-avatar-container {
+        position: relative;
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background-color: #007bff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 3rem;
+        color: white;
+        margin: 0 auto 15px auto;
+        overflow: hidden;
+        border: 3px solid #eee;
+    }
+    .profile-avatar-container img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .profile-upload-form {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    .profile-upload-form label.btn {
+        margin-top: 10px;
+    }
+    .profile-section-list {
+        list-style: none;
+        padding: 0;
+    }
+    .profile-section-list li {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 10px;
+    }
+    .profile-section-list li a {
+        font-weight: bold;
+        color: #007bff;
+    }
+    .profile-section-list li span {
+        font-size: 0.9em;
+        color: #6c757d;
+        margin-left: 10px;
+    }
+    .tabs-content {
+        margin-top: 20px;
+    }
+    .nav-tabs .nav-link {
+        color: #007bff;
+    }
+    .nav-tabs .nav-link.active {
+        color: #495057;
+        background-color: #fff;
+        border-color: #dee2e6 #dee2e6 #fff;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -13,83 +73,159 @@
         <!-- Sidebar Navigation -->
         <aside class="profile-sidebar">
             <div class="profile-user-card">
-                <div class="profile-avatar">
-                    {{ current_user.username[0]|upper }}
+                <div class="profile-avatar-container">
+                    {% if current_user.avatar_url %}
+                        <img src="{{ url_for('static', filename='uploads/avatars/' ~ current_user.avatar_url) }}" alt="Avatar de {{ current_user.username }}">
+                    {% else %}
+                        <i class="fas fa-user-circle"></i>
+                    {% endif %}
                 </div>
                 <h2 class="profile-username">{{ current_user.username }}</h2>
                 <p class="profile-email">{{ current_user.email }}</p>
+
+                <form class="profile-upload-form" method="POST" action="{{ url_for('profile') }}" enctype="multipart/form-data">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <input type="file" name="avatar" id="avatarUpload" accept="image/*" style="display: none;">
+                    <label for="avatarUpload" class="btn btn-outline btn-sm">Changer l'avatar</label>
+                    <button type="submit" class="btn btn-primary btn-sm">Enregistrer l'avatar</button>
+                </form>
             </div>
             <nav class="profile-nav">
-                <a href="{{ url_for('profile') }}" class="nav-link active">
+                <a href="#personal-info" class="nav-link active" data-bs-toggle="tab" data-bs-target="#personal-info">
                     <i class="fas fa-user-circle"></i>
-                    <span>Mon Profil</span>
+                    <span>Informations Personnelles</span>
                 </a>
-                <a href="#" class="nav-link" onclick="alert('Fonctionnalité à venir')">
+                <a href="#my-signalements" class="nav-link" data-bs-toggle="tab" data-bs-target="#my-signalements">
+                    <i class="fas fa-bullhorn"></i>
+                    <span>Mes Signalements ({{ user_signalements|length }})</span>
+                </a>
+                <a href="#my-comments" class="nav-link" data-bs-toggle="tab" data-bs-target="#my-comments">
+                    <i class="fas fa-comments"></i>
+                    <span>Mes Commentaires ({{ user_comments|length }})</span>
+                </a>
+                <a href="{{ url_for('change_password') }}" class="nav-link">
                     <i class="fas fa-key"></i>
-                    <span>Mot de passe</span>
-                </a>
-                <a href="#" class="nav-link" onclick="alert('Fonctionnalité à venir')">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
-                </a>
-                <a href="#" class="nav-link" onclick="alert('Fonctionnalité à venir')">
-                    <i class="fas fa-shield-alt"></i>
-                    <span>Confidentialité</span>
+                    <span>Changer le mot de passe</span>
                 </a>
             </nav>
         </aside>
 
         <!-- Main Content -->
         <main class="profile-main-content">
-            <section class="card">
-                <div class="card-header">
-                    <h2>Informations Personnelles</h2>
-                    <button class="btn btn-outline btn-sm" onclick="alert('Fonctionnalité à venir')">
-                        <i class="fas fa-edit"></i> Modifier
-                    </button>
-                </div>
-                <div class="card-body">
-                    <form>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="username" class="form-label">Nom d'utilisateur</label>
-                                <input type="text" id="username" class="form-control" value="{{ current_user.username }}" disabled>
-                            </div>
-                            <div class="form-group">
-                                <label for="email" class="form-label">Adresse Email</label>
-                                <input type="email" id="email" class="form-control" value="{{ current_user.email }}" disabled>
-                            </div>
+            <div class="tab-content">
+                <!-- Personal Info Tab -->
+                <div class="tab-pane fade show active" id="personal-info">
+                    <section class="card">
+                        <div class="card-header">
+                            <h2>Informations Personnelles</h2>
+                            <button class="btn btn-outline btn-sm" onclick="alert('Fonctionnalité à venir')">
+                                <i class="fas fa-edit"></i> Modifier
+                            </button>
                         </div>
-                        <div class="form-group">
-                            <label for="join-date" class="form-label">Membre Depuis</label>
-                            <input type="text" id="join-date" class="form-control" value="{{ current_user.created_at.strftime('%d %B %Y') }}" disabled>
+                        <div class="card-body">
+                            <form>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label for="username" class="form-label">Nom d'utilisateur</label>
+                                        <input type="text" id="username" class="form-control" value="{{ current_user.username }}" disabled>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="email" class="form-label">Adresse Email</label>
+                                        <input type="email" id="email" class="form-control" value="{{ current_user.email }}" disabled>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="join-date" class="form-label">Membre Depuis</label>
+                                    <input type="text" id="join-date" class="form-control" value="{{ current_user.created_at.strftime('%d %B %Y') }}" disabled>
+                                </div>
+                            </form>
                         </div>
-                    </form>
-                </div>
-            </section>
+                    </section>
 
-            <section class="card">
-                <div class="card-header">
-                    <h2>Mes Statistiques</h2>
+                    <section class="card">
+                        <div class="card-header">
+                            <h2>Mes Statistiques</h2>
+                        </div>
+                        <div class="card-body">
+                            <div class="stats-grid-profile">
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ user_signalements|length }}</span>
+                                    <span class="stat-label">Signalements Créés</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ user_signalements|selectattr('status', 'equalto', 'active')|list|length }}</span>
+                                    <span class="stat-label">Actifs</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ user_signalements|selectattr('status', 'equalto', 'found')|list|length }}</span>
+                                    <span class="stat-label">Résolus</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-value">{{ user_comments|length }}</span>
+                                    <span class="stat-label">Commentaires</span>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
                 </div>
-                <div class="card-body">
-                    <div class="stats-grid-profile">
-                        <div class="stat-item">
-                            <span class="stat-value">{{ current_user.signalements|length }}</span>
-                            <span class="stat-label">Signalements Créés</span>
+
+                <!-- My Signalements Tab -->
+                <div class="tab-pane fade" id="my-signalements">
+                    <section class="card">
+                        <div class="card-header">
+                            <h2>Mes Signalements</h2>
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-value">{{ current_user.signalements|selectattr('status', 'equalto', 'active')|list|length }}</span>
-                            <span class="stat-label">Actifs</span>
+                        <div class="card-body">
+                            {% if user_signalements %}
+                                <ul class="profile-section-list">
+                                    {% for s in user_signalements %}
+                                        <li>
+                                            <a href="{{ url_for('signalement_detail', id=s.id) }}">{{ s.title }}</a>
+                                            <span class="badge badge-{{ s.type }}">
+                                                {% if s.type == 'lost' %}Perdu
+                                                {% elif s.type == 'missing' %}Disparu
+                                                {% else %}Volé{% endif %}
+                                            </span>
+                                            <span class="badge badge-status {% if s.status == 'active' %}badge-success{% else %}badge-secondary{% endif %}">
+                                                {{ 'Actif' if s.status == 'active' else 'Retrouvé' }}
+                                            </span>
+                                            <a href="{{ url_for('edit_signalement', id=s.id) }}" class="btn btn-sm btn-outline-primary" style="float: right;">Modifier</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Vous n'avez pas encore créé de signalements.</p>
+                                <a href="{{ url_for('nouveau_signalement') }}" class="btn btn-primary">Créer un signalement</a>
+                            {% endif %}
                         </div>
-                        <div class="stat-item">
-                            <span class="stat-value">{{ current_user.signalements|selectattr('status', 'equalto', 'found')|list|length }}</span>
-                            <span class="stat-label">Résolus</span>
-                        </div>
-                    </div>
+                    </section>
                 </div>
-            </section>
-            
+
+                <!-- My Comments Tab -->
+                <div class="tab-pane fade" id="my-comments">
+                    <section class="card">
+                        <div class="card-header">
+                            <h2>Mes Commentaires</h2>
+                        </div>
+                        <div class="card-body">
+                            {% if user_comments %}
+                                <ul class="profile-section-list">
+                                    {% for comment in user_comments %}
+                                        <li>
+                                            {{ comment.content | truncate(100) }} sur 
+                                            <a href="{{ url_for('signalement_detail', id=comment.signalement_id) }}">{{ comment.signalement.title }}</a>
+                                            <span>{{ comment.timestamp.strftime('%d/%m/%Y') }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Vous n'avez pas encore laissé de commentaires.</p>
+                            {% endif %}
+                        </div>
+                    </section>
+                </div>
+            </div>
+
             <section class="card danger-zone">
                 <div class="card-header">
                     <h2>Danger Zone</h2>
@@ -105,4 +241,8 @@
         </main>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 {% endblock %}

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport de Signalement - {{ signalement.title }}</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;
+        }
+        .container {
+            width: 80%;
+            margin: 40px auto;
+            padding: 30px;
+            border: 2px solid #007bff;
+            border-radius: 15px;
+            background-color: #fff;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px dashed #007bff;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            color: #0056b3;
+        }
+        .header .badge {
+            display: inline-block;
+            padding: 8px 15px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #fff;
+            background-color: #dc3545;
+            border-radius: 20px;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+        .content {
+            display: flex;
+            align-items: flex-start;
+            gap: 30px;
+        }
+        .main-info {
+            flex: 2;
+        }
+        .side-info {
+            flex: 1;
+            text-align: center;
+        }
+        h2 {
+            font-size: 22px;
+            color: #007bff;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+        .item {
+            margin-bottom: 15px;
+        }
+        .item strong {
+            display: block;
+            color: #555;
+            margin-bottom: 5px;
+        }
+        .item p {
+            margin: 0;
+            font-size: 16px;
+        }
+        .item-image {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 10px;
+            border: 3px solid #eee;
+            margin-bottom: 20px;
+        }
+        .qr-code {
+            padding: 15px;
+            border: 2px solid #007bff;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        .qr-code img {
+            width: 100%;
+            max-width: 200px;
+            display: block;
+            margin: 0 auto;
+        }
+        .qr-code p {
+            font-weight: 700;
+            margin-top: 10px;
+            color: #0056b3;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 14px;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="badge">{{ signalement.type }}</span>
+            <h1>{{ signalement.title }}</h1>
+        </div>
+
+        <div class="content">
+            <div class="main-info">
+                {% if signalement.image_url %}
+                    <img src="{{ url_for('static', filename='uploads/images/' ~ signalement.image_url, _external=True) }}" alt="Image de l'objet" class="item-image">
+                {% endif %}
+                
+                <div class="item">
+                    <h2>Description</h2>
+                    <p>{{ signalement.description|nl2br }}</p>
+                </div>
+                
+                <div class="item">
+                    <strong>Date du signalement:</strong>
+                    <p>{{ signalement.date.strftime('%d/%m/%Y') }}</p>
+                </div>
+
+                <div class="item">
+                    <strong>Lieu:</strong>
+                    <p>{{ signalement.location }}</p>
+                </div>
+
+                {% if signalement.category %}
+                <div class="item">
+                    <strong>Catégorie:</strong>
+                    <p>{{ signalement.category }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="side-info">
+                <div class="qr-code">
+                    <p>Scannez pour plus de détails</p>
+                    <img src="data:image/png;base64,{{ qr_code_base64 }}" alt="Code QR">
+                </div>
+
+                <div class="item" style="margin-top: 25px;">
+                    <h2>Contact</h2>
+                    <p>{{ signalement.contact }}</p>
+                </div>
+
+                {% if signalement.reward %}
+                <div class="item">
+                    <h2>Récompense</h2>
+                    <p>{{ signalement.reward }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="footer">
+            Généré par SignalAlert - {{ now.strftime('%d/%m/%Y') }}
+        </div>
+    </div>
+</body>
+</html>

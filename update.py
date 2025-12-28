@@ -16,6 +16,19 @@ def update_database_schema():
         else:
             print("'qr_code_url' column already exists.")
         
+        # Check for 'avatar_url' in 'user' table
+        user_columns = inspector.get_columns('user')
+        user_column_names = [col['name'] for col in user_columns]
+
+        if 'avatar_url' not in user_column_names:
+            print("Adding 'avatar_url' column to 'user' table...")
+            with db.engine.connect() as connection:
+                connection.execute(text("ALTER TABLE user ADD COLUMN avatar_url VARCHAR(500) NULL"))
+                connection.commit()
+            print("'avatar_url' column added successfully.")
+        else:
+            print("'avatar_url' column already exists.")
+
         # If there are any existing signalements, generate QR codes for them
         # (This is optional, but good for data consistency)
         existing_signalements = Signalement.query.filter(Signalement.qr_code_url == None).all()

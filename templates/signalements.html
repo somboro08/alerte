@@ -17,28 +17,67 @@
         </div>
         
         <form method="GET" action="{{ url_for('signalements') }}" class="search-form">
-            <div class="search-input-wrapper">
-                <i class="fas fa-search"></i>
-                <input type="text" 
-                       name="search" 
-                       class="search-input" 
-                       placeholder="Rechercher par mot-clé, lieu, catégorie..."
-                       value="{{ search_query }}">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="search">Rechercher</label>
+                    <div class="search-input-wrapper">
+                        <i class="fas fa-search"></i>
+                        <input type="text" 
+                               name="search" 
+                               id="search"
+                               class="search-input" 
+                               placeholder="Mot-clé, lieu..."
+                               value="{{ search_query }}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="category">Catégorie</label>
+                    <select name="category" id="category" class="form-control">
+                        <option value="">Toutes les catégories</option>
+                        <option value="electronics" {% if category_query == 'electronics' %}selected{% endif %}>Électronique</option>
+                        <option value="documents" {% if category_query == 'documents' %}selected{% endif %}>Documents & Pièces d'identité</option>
+                        <option value="jewelry" {% if category_query == 'jewelry' %}selected{% endif %}>Bijoux & Montres</option>
+                        <option value="clothing" {% if category_query == 'clothing' %}selected{% endif %}>Vêtements & Accessoires</option>
+                        <option value="bags" {% if category_query == 'bags' %}selected{% endif %}>Sacs & Bagages</option>
+                        <option value="keys" {% if category_query == 'keys' %}selected{% endif %}>Clés</option>
+                        <option value="animals" {% if category_query == 'animals' %}selected{% endif %}>Animaux</option>
+                        <option value="other" {% if category_query == 'other' %}selected{% endif %}>Autre</option>
+                    </select>
+                </div>
             </div>
-            <button type="submit" class="btn btn-primary">Rechercher</button>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="status">Statut</label>
+                    <select name="status" id="status" class="form-control">
+                        <option value="">Tous les statuts</option>
+                        <option value="active" {% if status_query == 'active' %}selected{% endif %}>Actif</option>
+                        <option value="found" {% if status_query == 'found' %}selected{% endif %}>Retrouvé</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="start_date">Date de début</label>
+                    <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date_query }}">
+                </div>
+                <div class="form-group">
+                    <label for="end_date">Date de fin</label>
+                    <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date_query }}">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 15px;">Appliquer les filtres</button>
+            <a href="{{ url_for('signalements') }}" class="btn btn-outline" style="margin-top: 15px; margin-left: 10px;">Réinitialiser</a>
         </form>
         
         <div class="filter-tags">
-            <a href="{{ url_for('signalements') }}" class="filter-tag {% if not current_filter %}active{% endif %}">
+            <a href="{{ url_for('signalements', search=search_query, category=category_query, status=status_query, start_date=start_date_query, end_date=end_date_query) }}" class="filter-tag {% if not current_filter %}active{% endif %}">
                 <i class="fas fa-list"></i> Tous
             </a>
-            <a href="{{ url_for('signalements', type='lost') }}" class="filter-tag {% if current_filter == 'lost' %}active{% endif %}">
+            <a href="{{ url_for('signalements', type='lost', search=search_query, category=category_query, status=status_query, start_date=start_date_query, end_date=end_date_query) }}" class="filter-tag {% if current_filter == 'lost' %}active{% endif %}">
                 <i class="fas fa-search"></i> Objets perdus
             </a>
-            <a href="{{ url_for('signalements', type='missing') }}" class="filter-tag {% if current_filter == 'missing' %}active{% endif %}">
+            <a href="{{ url_for('signalements', type='missing', search=search_query, category=category_query, status=status_query, start_date=start_date_query, end_date=end_date_query) }}" class="filter-tag {% if current_filter == 'missing' %}active{% endif %}">
                 <i class="fas fa-user-slash"></i> Personnes disparues
             </a>
-            <a href="{{ url_for('signalements', type='stolen') }}" class="filter-tag {% if current_filter == 'stolen' %}active{% endif %}">
+            <a href="{{ url_for('signalements', type='stolen', search=search_query, category=category_query, status=status_query, start_date=start_date_query, end_date=end_date_query) }}" class="filter-tag {% if current_filter == 'stolen' %}active{% endif %}">
                 <i class="fas fa-shield-alt"></i> Objets volés
             </a>
         </div>

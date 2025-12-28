@@ -10,7 +10,9 @@ from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash, check_password_hash
 import qrcode
 from PIL import Image
-from fpdf import FPDF
+from PIL import Image as PILImage # Alias to avoid conflict with `Image` module name
+import io
+
 from werkzeug.utils import secure_filename
 import uuid
 from flask_wtf.csrf import generate_csrf # New import for CSRF token
@@ -29,6 +31,37 @@ def nl2br(value):
 
 # Ajoutez le filtre à Jinja
 app.jinja_env.filters['nl2br'] = nl2br
+
+def resize_and_save_image(image_stream, max_long_side, save_path, quality=85):
+    """
+    Redimensionne et compresse une image.
+    :param image_stream: Le flux du fichier image (ex: request.files['image']).
+    :param max_long_side: La longueur maximale souhaitée pour le côté le plus long de l'image.
+    :param save_path: Le chemin complet où sauvegarder l'image.
+    :param quality: La qualité de compression pour les images JPEG (0-100).
+    :return: True si l'opération réussit, False sinon.
+    """
+    try:
+        img = PILImage.open(image_stream)
+        
+        # Redimensionner l'image si nécessaire
+        width, height = img.size
+        if max(width, height) > max_long_side:
+            if width > height:
+                new_width = max_long_side
+                new_height = int(max_long_side * height / width)
+            else:
+                new_height = max_long_side
+                new_width = int(max_long_side * width / height)
+            img = img.resize((new_width, new_height), PILImage.LANCZOS)
+        
+        # Sauvegarder l'image en optimisant
+        img.save(save_path, optimize=True, quality=quality)
+        return True
+    except Exception as e:
+        print(f"Erreur lors du redimensionnement et de la sauvegarde de l'image: {e}")
+        return False
+
 # Configuration for file uploads
 UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'images')
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
@@ -38,8 +71,20 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Ensure the upload folder exists
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-app.config['SECRET_KEY'] = 'dev-secret-key-change-in-production'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///signalalert.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# Database configuration: Use PostgreSQL on Render if DATABASE_URL is set, otherwise use SQLite
+database_url = os.environ.get('DATABASE_URL')
+if database_url:
+    # Adapt for pg8000 driver if necessary (Render uses pg8000 by default)
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql+pg8000://", 1)
+    app.config['SQLALCHEMY_DATABASE_URI'] = database_url
+    print(f"DEBUG: Using PostgreSQL database from DATABASE_URL: {database_url}")
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///signalalert.db'
+    print("DEBUG: Using SQLite database.")
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['MAIL_ENABLED'] = True
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
@@ -62,9 +107,12 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
+    avatar_url = db.Column(db.String(500), nullable=True)
     
     signalements = db.relationship('Signalement', backref='author', lazy=True)
+    comments = db.relationship('Comment', backref='author', lazy=True)
     reset_tokens = db.relationship('PasswordResetToken', backref='user', lazy=True, cascade='all, delete-orphan')
+    notifications = db.relationship('Notification', backref='user', lazy=True, cascade='all, delete-orphan')
     
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -107,6 +155,23 @@ class Signalement(db.Model):
     additional_info = db.Column(db.Text, nullable=True)
     phone = db.Column(db.String(50), nullable=True)
     email = db.Column(db.String(120), nullable=True) # Assuming this is separate from 'contact'
+    
+    comments = db.relationship('Comment', backref='signalement', lazy=True, cascade='all, delete-orphan')
+
+class Comment(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    signalement_id = db.Column(db.Integer, db.ForeignKey('signalement.id'), nullable=False)
+
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    is_read = db.Column(db.Boolean, default=False)
+    link = db.Column(db.String(255))
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -195,6 +260,17 @@ def inject_now():
 def inject_csrf_token():
     return dict(csrf_token=generate_csrf)
 
+@app.context_processor
+def inject_notifications():
+    if current_user.is_authenticated:
+        unread_count = Notification.query.filter_by(user_id=current_user.id, is_read=False).count()
+        return dict(unread_notifications_count=unread_count)
+    return dict(unread_notifications_count=0)
+
+import io
+import base64
+from weasyprint import HTML
+
 def generate_qrcode_for_signalement(signalement_id, url_for_qrcode):
     """
     Génère un QR code pour le signalement et le sauvegarde.
@@ -230,72 +306,42 @@ def generate_qrcode_for_signalement(signalement_id, url_for_qrcode):
         print(f"Erreur lors de la génération du QR code pour le signalement {signalement_id}: {e}")
         return None
 
-def generate_signalement_pdf(signalement, base_url):
+@app.route('/signalement/<int:id>/generer_pdf')
+@login_required
+def generer_signalement_pdf(id):
     """
-    Génère un PDF pour le signalement contenant les informations essentielles, le lien partageable et le QR code.
-    :param signalement: L'objet Signalement.
-    :param base_url: L'URL de base de l'application (pour construire des liens absolus).
-    :return: Le chemin relatif du fichier PDF généré, ou None en cas d'échec.
+    Génère une affiche PDF stylisée pour un signalement en utilisant WeasyPrint.
     """
-    try:
-        pdf_dir = os.path.join(app.root_path, 'static', 'uploads', 'pdfs')
-        os.makedirs(pdf_dir, exist_ok=True)
-        
-        pdf = FPDF()
-        pdf.add_page()
-        pdf.set_font("Arial", "B", 16)
-        
-        # Title
-        pdf.cell(200, 10, txt=signalement.title, ln=True, align="C")
-        pdf.ln(10) # Line break
-
-        # Signalement Type
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, txt=f"Type: {signalement.type.capitalize()}", ln=True)
-        
-        # Details
-        pdf.set_font("Arial", "", 10)
-        pdf.multi_cell(0, 7, txt=f"Description: {signalement.description}")
-        pdf.cell(0, 7, txt=f"Localisation: {signalement.location}", ln=True)
-        pdf.cell(0, 7, txt=f"Date: {signalement.date.strftime('%d/%m/%Y')}", ln=True)
-        if signalement.category:
-            pdf.cell(0, 7, txt=f"Catégorie: {signalement.category}", ln=True)
-        pdf.cell(0, 7, txt=f"Contact: {signalement.contact}", ln=True)
-        if signalement.reward:
-            pdf.cell(0, 7, txt=f"Récompense: {signalement.reward}", ln=True)
-        pdf.ln(10)
-
-        # Shareable Link
-        shareable_link = url_for('signalement_detail', id=signalement.id, _external=True, _scheme=base_url.split('://')[0])
-        pdf.set_font("Arial", "B", 12)
-        pdf.cell(0, 10, txt="Lien partageable:", ln=True)
-        pdf.set_font("Arial", "", 10)
-        pdf.multi_cell(0, 7, txt=shareable_link)
-        pdf.ln(10)
-
-        # QR Code
-        if signalement.qr_code_url:
-            qr_code_full_path = os.path.join(app.root_path, 'static', signalement.qr_code_url)
-            if os.path.exists(qr_code_full_path):
-                # Ensure the image path is absolute for FPDF
-                pdf.image(qr_code_full_path, x=75, y=pdf.get_y(), w=60)
-                pdf.ln(60) # Move down after the image
-            else:
-                pdf.set_font("Arial", "I", 10)
-                pdf.cell(0, 10, txt="QR Code image not found.", ln=True)
-        else:
-            pdf.set_font("Arial", "I", 10)
-            pdf.cell(0, 10, txt="QR Code non disponible.", ln=True)
-        
-        # Save PDF
-        pdf_filename = f"signalement_{signalement.id}.pdf"
-        pdf_filepath = os.path.join(pdf_dir, pdf_filename)
-        pdf.output(pdf_filepath)
-
-        return os.path.join('uploads', 'pdfs', pdf_filename).replace('\\', '/')
-    except Exception as e:
-        print(f"Erreur lors de la génération du PDF pour le signalement {signalement.id}: {e}")
-        return None
+    signalement = Signalement.query.get_or_404(id)
+    
+    # 1. Générer le QR Code en mémoire
+    signalement_url = url_for('signalement_detail', id=signalement.id, _external=True)
+    qr = qrcode.QRCode(version=1, box_size=10, border=5)
+    qr.add_data(signalement_url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    # Encoder en Base64 pour l'intégrer dans le HTML
+    buffered = io.BytesIO()
+    img.save(buffered, format="PNG")
+    qr_code_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    
+    # 2. Rendre le template HTML avec les données
+    # Assurez-vous que les chemins vers les CSS sont absolus ou accessibles par WeasyPrint
+    rendered_html = render_template('rapport_pdf.html', 
+                                    signalement=signalement, 
+                                    qr_code_base64=qr_code_base64)
+    
+    # 3. Générer le PDF avec WeasyPrint
+    pdf = HTML(string=rendered_html, base_url=request.url_root).write_pdf()
+    
+    # 4. Retourner le PDF en tant que réponse
+    return send_file(
+        io.BytesIO(pdf),
+        mimetype='application/pdf',
+        as_attachment=True,
+        download_name=f'signalement_{signalement.id}.pdf'
+    )
 
 # ROUTES PRINCIPALES
 
@@ -326,6 +372,10 @@ def signalements():
     page = request.args.get('page', 1, type=int)
     type_filter = request.args.get('type', '')
     search = request.args.get('search', '')
+    category_filter = request.args.get('category', '')
+    status_filter = request.args.get('status', '')
+    start_date_filter = request.args.get('start_date', '')
+    end_date_filter = request.args.get('end_date', '')
     
     query = Signalement.query
     
@@ -334,41 +384,107 @@ def signalements():
     
     if search:
         query = query.filter(Signalement.title.contains(search) | Signalement.description.contains(search))
+
+    if category_filter:
+        query = query.filter_by(category=category_filter)
+
+    if status_filter:
+        query = query.filter_by(status=status_filter)
     
-    signalements = query.filter_by(status='active')\
-                       .order_by(Signalement.created_at.desc())\
+    if start_date_filter:
+        try:
+            start_date = datetime.strptime(start_date_filter, '%Y-%m-%d')
+            query = query.filter(Signalement.date >= start_date)
+        except ValueError:
+            flash('Format de date de début invalide.', 'error')
+
+    if end_date_filter:
+        try:
+            end_date = datetime.strptime(end_date_filter, '%Y-%m-%d')
+            query = query.filter(Signalement.date <= end_date)
+        except ValueError:
+            flash('Format de date de fin invalide.', 'error')
+    
+    signalements = query.order_by(Signalement.created_at.desc())\
                        .paginate(page=page, per_page=12, error_out=False)
     
     return render_template('signalements.html',
                           signalements=signalements,
                           current_filter=type_filter,
                           search_query=search,
+                          category_query=category_filter,
+                          status_query=status_filter,
+                          start_date_query=start_date_filter,
+                          end_date_query=end_date_filter,
                           current_user=current_user)
+
+@app.route('/map')
+def map_view():
+    return render_template('map.html', current_user=current_user)
 
 @app.route('/signalement/<int:id>')
 def signalement_detail(id):
     signalement = Signalement.query.get_or_404(id)
-    print(f"DEBUG: Signalement QR Code URL in detail page: {signalement.qr_code_url}")
+    comments = Comment.query.filter_by(signalement_id=id).order_by(Comment.timestamp.desc()).all()
     return render_template('signalement_detail.html',
                           signalement=signalement,
+                          comments=comments,
                           current_user=current_user)
 
-@app.route('/signalement/<int:id>/pdf')
-def download_signalement_pdf(id):
+@app.route('/signalement/<int:id>/comment', methods=['POST'])
+@login_required
+def add_comment(id):
     signalement = Signalement.query.get_or_404(id)
-    
-    # Get base URL for shareable link within PDF
-    # This needs to be the external URL in production
-    base_url = request.url_root.replace(request.script_root, '') # Gets the base URL like http://localhost:5000/
+    comment_content = request.form.get('comment_content')
 
-    pdf_relative_path = generate_signalement_pdf(signalement, base_url)
-    
-    if pdf_relative_path:
-        pdf_full_path = os.path.join(app.root_path, 'static', pdf_relative_path)
-        return send_file(pdf_full_path, as_attachment=True, download_name=f"signalement_{signalement.id}.pdf")
-    
-    flash('Erreur lors de la génération du PDF.', 'error')
-    return redirect(url_for('signalement_detail', id=signalement.id))
+    if not comment_content:
+        flash('Le commentaire ne peut pas être vide.', 'error')
+        return redirect(url_for('signalement_detail', id=id))
+
+    comment = Comment(
+        content=comment_content,
+        user_id=current_user.id,
+        signalement_id=id
+    )
+    db.session.add(comment)
+
+    # Notifier le propriétaire du signalement, sauf s'il commente son propre post
+    if signalement.author.id != current_user.id:
+        notification = Notification(
+            name=f"{current_user.username} a commenté votre signalement : \"{signalement.title}\"",
+            user_id=signalement.author.id,
+            link=url_for('signalement_detail', id=id)
+        )
+        db.session.add(notification)
+
+    db.session.commit()
+
+    flash('Votre commentaire a été ajouté.', 'success')
+    return redirect(url_for('signalement_detail', id=id))
+
+@app.route('/notifications')
+@login_required
+def notifications():
+    notifications = Notification.query.filter_by(user_id=current_user.id).order_by(Notification.timestamp.desc()).all()
+    # Marquer les notifications comme lues
+    for notification in notifications:
+        notification.is_read = True
+    db.session.commit()
+    return render_template('notifications.html', notifications=notifications)
+
+@app.route('/politique-de-confidentialite')
+def politique_de_confidentialite():
+    return render_template('politique_de_confidentialite.html')
+
+@app.route('/mentions-legales')
+def mentions_legales():
+    return render_template('mentions_legales.html')
+
+@app.route('/conditions-d-utilisation')
+def conditions_d_utilisation():
+    return render_template('conditions_d_utilisation.html')
+
+
 
 @app.route('/dashboard')
 @login_required
@@ -391,12 +507,27 @@ def nouveau_signalement():
                 filename = secure_filename(file.filename)
                 unique_filename = str(uuid.uuid4()) + '_' + filename
                 file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                file.save(file_path)
-                image_url = unique_filename # Store only the filename
+                
+                # Redimensionner et sauvegarder l'image
+                if resize_and_save_image(file, 800, file_path): # Max 800px on longest side
+                    image_url = unique_filename # Store only the filename
+                else:
+                    flash('Erreur lors du traitement de l\'image.', 'error')
+                    return redirect(request.url)
             elif file.filename != '': # If a file was submitted but not allowed
                 flash('Type de fichier image non autorisé.', 'error')
                 return redirect(request.url) # Redirect back to the form
         
+        # Safely get lat and lng
+        lat = request.form.get('lat')
+        lng = request.form.get('lng')
+        try:
+            lat = float(lat) if lat else None
+            lng = float(lng) if lng else None
+        except (ValueError, TypeError):
+            lat = None
+            lng = None
+
         signalement = Signalement(
             type=request.form['type'],
             title=request.form['title'],
@@ -407,7 +538,9 @@ def nouveau_signalement():
             contact=request.form.get('contact', current_user.email),
             reward=request.form.get('reward'),
             user_id=current_user.id,
-            image_url=image_url # Use the generated image_url
+            image_url=image_url, # Use the generated image_url
+            lat=lat,
+            lng=lng
         )
         db.session.add(signalement)
         db.session.commit() # Commit to get the signalement.id
@@ -557,11 +690,47 @@ def register():
     
     return render_template('register.html', current_user=current_user)
 
-@app.route('/profile')
+@app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
+    # Ensure AVATAR_UPLOAD_FOLDER exists
+    AVATAR_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'avatars')
+    os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
+    app.config['AVATAR_UPLOAD_FOLDER'] = AVATAR_UPLOAD_FOLDER
+
+    if request.method == 'POST':
+        if 'avatar' in request.files:
+            file = request.files['avatar']
+            if file.filename == '':
+                flash('Aucun fichier sélectionné pour l\'avatar.', 'warning')
+            elif file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                unique_filename = str(uuid.uuid4()) + '_' + filename
+                file_path = os.path.join(app.config['AVATAR_UPLOAD_FOLDER'], unique_filename)
+                
+                # Redimensionner et sauvegarder l'avatar
+                if resize_and_save_image(file, 200, file_path): # Max 200px for avatar
+                    current_user.avatar_url = unique_filename
+                    db.session.commit()
+                    flash('Votre photo de profil a été mise à jour !', 'success')
+                else:
+                    flash('Erreur lors du traitement de l\'image de profil.', 'error')
+            else:
+                flash('Type de fichier image non autorisé pour l\'avatar.', 'error')
+        
+        return redirect(url_for('profile'))
+
+    user_signalements = Signalement.query.filter_by(user_id=current_user.id)\
+                                        .order_by(Signalement.created_at.desc())\
+                                        .all()
+    user_comments = Comment.query.filter_by(user_id=current_user.id)\
+                                 .order_by(Comment.timestamp.desc())\
+                                 .all()
+    
     return render_template('profile.html', 
                           current_user=current_user,
+                          user_signalements=user_signalements,
+                          user_comments=user_comments,
                           now=datetime.utcnow())
 
 @app.route('/logout')
@@ -677,6 +846,23 @@ def api_get_signalements():
         'author': s.author.username if s.author else 'Anonyme'
     } for s in signalements])
 
+@app.route('/api/signalements/locations')
+def api_get_signalement_locations():
+    signalements_with_location = Signalement.query.filter(
+        Signalement.lat.isnot(None),
+        Signalement.lng.isnot(None)
+    ).all()
+    
+    locations = [{
+        'id': s.id,
+        'title': s.title,
+        'type': s.type,
+        'lat': s.lat,
+        'lng': s.lng
+    } for s in signalements_with_location]
+    
+    return jsonify(locations)
+
 @app.route('/api/signalements', methods=['POST'])
 @login_required
 def api_create_signalement():
@@ -727,11 +913,56 @@ def admin_donnees():
     
     users = User.query.all()
     signalements = Signalement.query.all()
+    all_comments = Comment.query.order_by(Comment.timestamp.desc()).all()
     
     return render_template('admin_donnees.html',
                           users=users,
                           signalements=signalements,
+                          all_comments=all_comments,
                           current_user=current_user)
+
+@app.route('/admin/user/<int:user_id>/toggle_active', methods=['POST'])
+@login_required
+def admin_toggle_user_active(user_id):
+    if current_user.email != 'admin@signalalert.bj':
+        flash("Accès non autorisé.", "error")
+        return redirect(url_for('index'))
+    
+    user = User.query.get_or_404(user_id)
+    if user.email == 'admin@signalalert.bj': # Prevent deactivating the main admin
+        flash("Vous ne pouvez pas désactiver le compte administrateur principal.", "error")
+        return redirect(url_for('admin_donnees'))
+
+    user.is_active = not user.is_active
+    db.session.commit()
+    flash(f"L'utilisateur {user.username} a été {'activé' if user.is_active else 'désactivé'}.", "success")
+    return redirect(url_for('admin_donnees'))
+
+@app.route('/admin/signalement/<int:signalement_id>/delete', methods=['POST'])
+@login_required
+def admin_delete_signalement(signalement_id):
+    if current_user.email != 'admin@signalalert.bj':
+        flash("Accès non autorisé.", "error")
+        return redirect(url_for('index'))
+    
+    signalement = Signalement.query.get_or_404(signalement_id)
+    db.session.delete(signalement)
+    db.session.commit()
+    flash(f"Le signalement '{signalement.title}' a été supprimé.", "success")
+    return redirect(url_for('admin_donnees'))
+
+@app.route('/admin/comment/<int:comment_id>/delete', methods=['POST'])
+@login_required
+def admin_delete_comment(comment_id):
+    if current_user.email != 'admin@signalalert.bj':
+        flash("Accès non autorisé.", "error")
+        return redirect(url_for('index'))
+    
+    comment = Comment.query.get_or_404(comment_id)
+    db.session.delete(comment)
+    db.session.commit()
+    flash(f"Le commentaire (ID: {comment.id}) a été supprimé.", "success")
+    return redirect(url_for('admin_donnees'))
 
 # ROUTES UTILITAIRES
 
@@ -785,9 +1016,9 @@ def init_db():
 if __name__ == '__main__':
     init_db()
     
-    print("🚀 SignalAlert démarré sur http://localhost:5000")
-    print("👤 Admin: admin@signalalert.bj / admin123")
-    print("📁 Static folder:", app.static_folder)
-    print("📁 Template folder:", app.template_folder)
-    
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # # Commented out for production deployment with Gunicorn
+    # print("🚀 SignalAlert démarré sur http://localhost:5000")
+    # print("👤 Admin: admin@signalalert.bj / admin123")
+    # print("📁 Static folder:", app.static_folder)
+    # print("📁 Template folder:", app.template_folder)
+    # app.run(debug=True, host='0.0.0.0', port=5000)

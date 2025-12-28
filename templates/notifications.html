@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Mes Notifications - SignalAlert{% endblock %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
+<style>
+    .notification-page {
+        max-width: 800px;
+        margin: 2rem auto;
+    }
+    .notification-list {
+        list-style-type: none;
+        padding: 0;
+    }
+    .notification-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+    }
+    .notification-item:hover {
+        background-color: #f8f9fa;
+    }
+    .notification-item.is-read {
+        color: #6c757d;
+        background-color: #fdfdfd;
+    }
+    .notification-item .icon {
+        font-size: 1.5rem;
+        margin-right: 1.5rem;
+        color: #007bff;
+    }
+    .notification-item.is-read .icon {
+        color: #6c757d;
+    }
+    .notification-item .content {
+        flex-grow: 1;
+    }
+    .notification-item .timestamp {
+        font-size: 0.85em;
+        color: #6c757d;
+        margin-top: 0.25rem;
+    }
+    .no-notifications {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container notification-page">
+    <div class="form-card">
+        <div class="form-header">
+            <h1><i class="fas fa-bell"></i> Mes Notifications</h1>
+        </div>
+        <div class="form-body">
+            {% if notifications %}
+                <ul class="notification-list">
+                    {% for notif in notifications %}
+                    <a href="{{ notif.link or '#' }}" style="text-decoration: none; color: inherit;">
+                        <li class="notification-item {% if notif.is_read %}is-read{% endif %}">
+                            <div class="icon">
+                                <i class="fas fa-comment"></i>
+                            </div>
+                            <div class="content">
+                                <p>{{ notif.name }}</p>
+                                <div class="timestamp">
+                                    {% set days_ago = (now.date() - notif.timestamp.date()).days %}
+                                    {% if days_ago == 0 %}aujourd'hui
+                                    {% elif days_ago == 1 %}hier
+                                    {% else %}il y a {{ days_ago }} jours
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </li>
+                    </a>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <div class="no-notifications">
+                    <i class="fas fa-bell-slash fa-3x"></i>
+                    <p style="margin-top: 1rem;">Vous n'avez aucune notification.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

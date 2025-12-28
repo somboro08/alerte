@@ -34,6 +34,7 @@
                 <ul class="nav-links">
                     <li><a href="{{ url_for('index') }}" class="{% if request.endpoint == 'index' %}active{% endif %}"><i class="fas fa-home"></i> Accueil</a></li>
                     <li><a href="{{ url_for('signalements') }}" class="{% if request.endpoint == 'signalements' %}active{% endif %}"><i class="fas fa-bullhorn"></i> Signalements</a></li>
+                    <li><a href="{{ url_for('map_view') }}" class="{% if request.endpoint == 'map_view' %}active{% endif %}"><i class="fas fa-map-marked-alt"></i> Carte</a></li>
                     
                     {% if current_user.is_authenticated %}
                     <li><a href="{{ url_for('dashboard') }}" class="{% if request.endpoint == 'dashboard' %}active{% endif %}"><i class="fas fa-tachometer-alt"></i> Tableau de bord</a></li>
@@ -45,6 +46,12 @@
                 
                 <div class="user-actions">
                     {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('notifications') }}" class="nav-icon-btn">
+                        <i class="fas fa-bell"></i>
+                        {% if unread_notifications_count > 0 %}
+                            <span class="notification-badge">{{ unread_notifications_count }}</span>
+                        {% endif %}
+                    </a>
                     <div class="user-dropdown">
                         <button class="user-btn">
                             <i class="fas fa-user-circle"></i>
@@ -57,6 +64,12 @@
                             </a>
                             <a href="{{ url_for('profile') }}" class="dropdown-item">
                                 <i class="fas fa-user"></i> Mon profil
+                            </a>
+                            <a href="{{ url_for('notifications') }}" class="dropdown-item">
+                                <i class="fas fa-bell"></i> Notifications
+                                {% if unread_notifications_count > 0 %}
+                                    <span class="badge-pill">{{ unread_notifications_count }}</span>
+                                {% endif %}
                             </a>
                             <div class="dropdown-divider"></div>
                             <a href="{{ url_for('logout') }}" class="dropdown-item">
@@ -148,9 +161,9 @@
             
             <div class="footer-bottom">
                 <p>&copy; 2023 SignalAlert. Tous droits réservés. | 
-                   <a href="#">Politique de confidentialité</a> | 
-                   <a href="#">Mentions légales</a> | 
-                   <a href="#">Conditions d'utilisation</a>
+                   <a href="{{ url_for('politique_de_confidentialite') }}">Politique de confidentialité</a> | 
+                   <a href="{{ url_for('mentions_legales') }}">Mentions légales</a> | 
+                   <a href="{{ url_for('conditions_d_utilisation') }}">Conditions d'utilisation</a>
                 </p>
             </div>
         </div>

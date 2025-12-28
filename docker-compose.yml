@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile/Dockerfile # Point to the Dockerfile within the directory
+    ports:
+      - "8000:8000"
+    environment:
+      # These variables will be set on Render.
+      # For local development, you might set them in a .env file or directly here.
+      FLASK_ENV: development
+      SECRET_KEY: ${SECRET_KEY}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      # Render will provide DATABASE_URL if you link a PostgreSQL database
+      DATABASE_URL: ${DATABASE_URL}
+      # For local SQLite, ensure your app.py defaults to it if DATABASE_URL is not set
+    volumes:
+      - .:/app
+      - /app/static/uploads/images # Named volume to persist user uploads
+      - /app/static/uploads/avatars # Named volume to persist user avatars
+      - /app/static/uploads/qr_codes # Named volume to persist QR codes
+      - /app/static/uploads/pdfs # Named volume to persist PDFs
+    command: gunicorn --bind 0.0.0.0:8000 app:app
+    # If using an SQLite database, ensure it's mapped for persistence
+    # - ./instance:/app/instance

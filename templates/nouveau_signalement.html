@@ -1,9 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Nouveau Signalement - SignalAlert{% endblock %}
+{% block title %}{% if signalement %}Modifier le Signalement{% else %}Nouveau Signalement{% endif %} - SignalAlert{% endblock %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/forms.css') }}">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+<style>
+    #location-picker-map {
+        height: 300px;
+        width: 100%;
+        margin-top: 15px;
+        border-radius: 8px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -11,11 +20,11 @@
     <div class="form-card form-card-lg">
         <div class="form-header">
             <i class="fas fa-plus-circle form-icon"></i>
-            <h1>Nouveau Signalement</h1>
-            <p>Remplissez le formulaire pour publier un nouveau signalement.</p>
+            <h1>{% if signalement %}Modifier le Signalement{% else %}Nouveau Signalement{% endif %}</h1>
+            <p>Remplissez le formulaire pour {% if signalement %}mettre à jour{% else %}publier{% endif %} un signalement.</p>
         </div>
 
-        <form method="POST" action="{{ url_for('nouveau_signalement') }}" id="reportForm" enctype="multipart/form-data" class="form-body">
+        <form method="POST" action="{{ url_for('nouveau_signalement') if not signalement else url_for('edit_signalement', id=signalement.id) }}" id="reportForm" enctype="multipart/form-data" class="form-body">
             
             <div class="form-section">
                 <h2 class="form-section-title">1. Type de Signalement</h2>
@@ -23,21 +32,21 @@
                     <label class="form-label required">Quel est le type de votre signalement ?</label>
                     <div class="type-options">
                         <label class="type-option">
-                            <input type="radio" name="type" value="lost" required>
+                            <input type="radio" name="type" value="lost" required {% if signalement and signalement.type == 'lost' %}checked{% endif %}>
                             <div class="option-content">
                                 <i class="fas fa-key"></i>
                                 <span>Objet Perdu</span>
                             </div>
                         </label>
                         <label class="type-option">
-                            <input type="radio" name="type" value="missing" required>
+                            <input type="radio" name="type" value="missing" required {% if signalement and signalement.type == 'missing' %}checked{% endif %}>
                             <div class="option-content">
                                 <i class="fas fa-user-friends"></i>
                                 <span>Personne Disparue</span>
                             </div>
                         </label>
                         <label class="type-option">
-                            <input type="radio" name="type" value="stolen" required>
+                            <input type="radio" name="type" value="stolen" required {% if signalement and signalement.type == 'stolen' %}checked{% endif %}>
                             <div class="option-content">
                                 <i class="fas fa-shield-alt"></i>
                                 <span>Objet Volé</span>
@@ -51,36 +60,42 @@
                 <h2 class="form-section-title">2. Informations Détaillées</h2>
                 <div class="form-group">
                     <label for="title" class="form-label required">Titre du signalement</label>
-                    <input type="text" id="title" class="form-control" name="title" placeholder="Ex: Portefeuille en cuir noir perdu près de..." required>
+                    <input type="text" id="title" class="form-control" name="title" placeholder="Ex: Portefeuille en cuir noir perdu près de..." required value="{{ signalement.title if signalement else '' }}">
                 </div>
                 <div class="form-group">
                     <label for="description" class="form-label required">Description</label>
-                    <textarea id="description" class="form-control" name="description" rows="5" placeholder="Donnez le plus de détails possible pour aider à l'identification." required></textarea>
+                    <textarea id="description" class="form-control" name="description" rows="5" placeholder="Donnez le plus de détails possible pour aider à l'identification." required>{{ signalement.description if signalement else '' }}</textarea>
                 </div>
                  <div class="form-group">
                     <label for="category" class="form-label required">Catégorie</label>
                     <select id="category" class="form-control" name="category" required>
-                        <option value="" disabled selected>Sélectionnez une catégorie</option>
-                        <option value="electronics">Électronique</option>
-                        <option value="documents">Documents & Pièces d'identité</option>
-                        <option value="jewelry">Bijoux & Montres</option>
-                        <option value="clothing">Vêtements & Accessoires</option>
-                        <option value="bags">Sacs & Bagages</option>
-                        <option value="keys">Clés</option>
-                        <option value="animals">Animaux</option>
-                        <option value="other">Autre</option>
+                        <option value="" disabled {% if not signalement %}selected{% endif %}>Sélectionnez une catégorie</option>
+                        <option value="electronics" {% if signalement and signalement.category == 'electronics' %}selected{% endif %}>Électronique</option>
+                        <option value="documents" {% if signalement and signalement.category == 'documents' %}selected{% endif %}>Documents & Pièces d'identité</option>
+                        <option value="jewelry" {% if signalement and signalement.category == 'jewelry' %}selected{% endif %}>Bijoux & Montres</option>
+                        <option value="clothing" {% if signalement and signalement.category == 'clothing' %}selected{% endif %}>Vêtements & Accessoires</option>
+                        <option value="bags" {% if signalement and signalement.category == 'bags' %}selected{% endif %}>Sacs & Bagages</option>
+                        <option value="keys" {% if signalement and signalement.category == 'keys' %}selected{% endif %}>Clés</option>
+                        <option value="animals" {% if signalement and signalement.category == 'animals' %}selected{% endif %}>Animaux</option>
+                        <option value="other" {% if signalement and signalement.category == 'other' %}selected{% endif %}>Autre</option>
                     </select>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="location" class="form-label required">Lieu</label>
-                        <input type="text" id="location" class="form-control" name="location" placeholder="Ex: Marché Dantokpa, Cotonou" required>
+                        <label for="location" class="form-label required">Lieu (Adresse ou ville)</label>
+                        <div style="display: flex;">
+                            <input type="text" id="location" class="form-control" name="location" placeholder="Ex: Marché Dantokpa, Cotonou" required value="{{ signalement.location if signalement else '' }}">
+                            <button type="button" id="searchLocationBtn" class="btn btn-secondary" style="margin-left: 10px;">Chercher</button>
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="date" class="form-label required">Date de l'incident</label>
-                        <input type="date" id="date" class="form-control" name="date" required>
+                        <input type="date" id="date" class="form-control" name="date" required value="{{ signalement.date.strftime('%Y-%m-%d') if signalement else '' }}">
                     </div>
                 </div>
+                <div id="location-picker-map"></div>
+                <input type="hidden" id="lat" name="lat" value="{{ signalement.lat if signalement else '' }}">
+                <input type="hidden" id="lng" name="lng" value="{{ signalement.lng if signalement else '' }}">
             </div>
 
             <div class="form-section">
@@ -90,19 +105,19 @@
                     <label for="imageUploadInput" class="image-upload-area">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <span id="imageUploadText">Cliquez pour choisir un fichier ou déposez-le ici.</span>
-                        <img id="imagePreview" class="image-preview" alt="Aperçu">
+                        <img id="imagePreview" class="image-preview" alt="Aperçu" {% if signalement and signalement.image_url %} src="/static/uploads/images/{{ signalement.image_url }}" style="display:block;" {% endif %}>
                     </label>
                     <input type="file" id="imageUploadInput" name="image" accept="image/*" style="display: none;">
                 </div>
                 <div class="form-group">
                     <label for="reward" class="form-label">Récompense (optionnel)</label>
-                    <input type="text" id="reward" class="form-control" name="reward" placeholder="Ex: Une somme symbolique, un café, etc.">
+                    <input type="text" id="reward" class="form-control" name="reward" placeholder="Ex: Une somme symbolique, un café, etc." value="{{ signalement.reward if signalement else '' }}">
                 </div>
             </div>
 
             <div class="form-actions">
                 <a href="{{ url_for('dashboard') }}" class="btn btn-outline">Annuler</a>
-                <button type="submit" class="btn btn-primary">Publier le signalement</button>
+                <button type="submit" class="btn btn-primary">{% if signalement %}Mettre à jour{% else %}Publier{% endif %} le signalement</button>
             </div>
         </form>
     </div>
@@ -110,10 +125,12 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script src="{{ url_for('static', filename='js/location-picker.js') }}"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const dateInput = document.querySelector('input[name="date"]');
-    if (dateInput) {
+    if (dateInput && !dateInput.value) {
         dateInput.value = new Date().toISOString().split('T')[0];
     }
 
@@ -122,6 +139,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const imageUploadText = document.getElementById('imageUploadText');
 
     if (imageUploadInput) {
+        if(imagePreview.style.display === 'block'){
+            imageUploadText.style.display = 'none';
+        }
         imageUploadInput.addEventListener('change', function() {
             if (this.files && this.files[0]) {
                 const reader = new FileReader();

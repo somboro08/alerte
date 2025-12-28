@@ -4,6 +4,21 @@
 
 {% block head_extra %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/signalement_detail.css') }}">
+<style>
+    .comments-section { margin-top: 30px; }
+    .comment-list { list-style-type: none; padding: 0; }
+    .comment-item {
+        background-color: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+    .comment-item .comment-author { font-weight: bold; color: #0056b3; }
+    .comment-item .comment-date { font-size: 0.85em; color: #6c757d; margin-left: 10px; }
+    .comment-item p { margin: 10px 0 0; }
+    .comment-form textarea { width: 100%; min-height: 100px; }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -72,6 +87,65 @@
                 </div>
             </section>
 
+            {% if current_user.is_authenticated and current_user.id == signalement.user_id and signalement.status == 'active' %}
+            <section class="card action-card">
+                <div class="card-header">
+                    <h2>Action du Propriétaire</h2>
+                </div>
+                <div class="card-body">
+                    <p>Votre signalement est toujours actif. Si votre objet a été retrouvé, marquez-le comme tel.</p>
+                    <form action="{{ url_for('api_mark_as_found', id=signalement.id) }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir marquer ce signalement comme RETROUVÉ ? Cette action est irréversible.');">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-check-circle"></i> Marquer comme Retrouvé
+                        </button>
+                    </form>
+                </div>
+            </section>
+            {% endif %}
+
+            <section class="comments-section card">
+                <h2><i class="fas fa-comments"></i> Commentaires ({{ comments|length }})</h2>
+                
+                {% if current_user.is_authenticated %}
+                <div class="comment-form">
+                    <form action="{{ url_for('add_comment', id=signalement.id) }}" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <div class="form-group">
+                            <label for="comment_content">Laissez un commentaire</label>
+                            <textarea name="comment_content" id="comment_content" class="form-control" rows="4" required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Envoyer</button>
+                    </form>
+                </div>
+                {% else %}
+                <p>Vous devez être <a href="{{ url_for('login', next=request.path) }}">connecté</a> pour laisser un commentaire.</p>
+                {% endif %}
+
+                <hr>
+
+                <div class="comment-list-container">
+                    {% if comments %}
+                        <ul class="comment-list">
+                        {% for comment in comments %}
+                            <li class="comment-item">
+                                <span class="comment-author">{{ comment.author.username }}</span>
+                                <span class="comment-date">
+                                    {% set days_ago = (now.date() - comment.timestamp.date()).days %}
+                                    {% if days_ago == 0 %}aujourd'hui
+                                    {% elif days_ago == 1 %}hier
+                                    {% else %}il y a {{ days_ago }} jours
+                                    {% endif %}
+                                </span>
+                                <p>{{ comment.content | nl2br }}</p>
+                            </li>
+                        {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p>Aucun commentaire pour le moment.</p>
+                    {% endif %}
+                </div>
+            </section>
+
         </main>
 
         <!-- Sidebar -->
@@ -113,6 +187,14 @@
                     </ul>
                 </div>
                 
+                <div class="sidebar-card card">
+                    <h3><i class="fas fa-file-pdf"></i> Affiche PDF</h3>
+                    <p>Téléchargez une affiche à imprimer et à partager.</p>
+                    <a href="{{ url_for('generer_signalement_pdf', id=signalement.id) }}" class="btn btn-primary" target="_blank">
+                        <i class="fas fa-download"></i> Télécharger l'affiche
+                    </a>
+                </div>
+
                 <div class="sidebar-card card">
                     <h3><i class="fas fa-share-alt"></i> Partager</h3>
                     <div class="social-share">
