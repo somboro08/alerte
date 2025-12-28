@@ -99,6 +99,7 @@ db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
 
+
 # Modèles
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -172,6 +173,35 @@ class Notification(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     is_read = db.Column(db.Boolean, default=False)
     link = db.Column(db.String(255))
+db = SQLAlchemy(app)
+
+# ⬇⬇⬇⬇⬇⬇⬇⬇⬇ AJOUTEZ CE CODE ICI ⬇⬇⬇⬇⬇⬇⬇⬇⬇
+# Initialisation automatique de la base de données au démarrage
+with app.app_context():
+    try:
+        # Créer toutes les tables si elles n'existent pas
+        db.create_all()
+        print("✅ Tables de la base de données créées avec succès !")
+        
+        # Créer l'utilisateur admin par défaut si nécessaire
+        if not User.query.filter_by(email='admin@signalalert.bj').first():
+            admin = User(
+                username='admin',
+                email='admin@signalalert.bj',
+                is_active=True
+            )
+            admin.set_password('admin123')
+            db.session.add(admin)
+            db.session.commit()
+            print("✅ Utilisateur admin créé avec succès")
+    except Exception as e:
+        print(f"⚠️  Note lors de l'initialisation de la base de données: {e}")
+        # Ne pas lever l'exception pour ne pas bloquer le démarrage
+# ⬆⬆⬆⬆⬆⬆⬆⬆⬆ FIN DU CODE À AJOUTER ⬆⬆⬆⬆⬆⬆⬆⬆⬆
+
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
 
 @login_manager.user_loader
 def load_user(user_id):
