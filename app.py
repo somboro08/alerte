@@ -173,7 +173,7 @@ class Notification(db.Model):
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     is_read = db.Column(db.Boolean, default=False)
     link = db.Column(db.String(255))
-db = SQLAlchemy(app)
+
 
 # ⬇⬇⬇⬇⬇⬇⬇⬇⬇ AJOUTEZ CE CODE ICI ⬇⬇⬇⬇⬇⬇⬇⬇⬇
 # Initialisation automatique de la base de données au démarrage
