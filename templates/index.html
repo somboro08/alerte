@@ -159,7 +159,7 @@
             {% for signalement in signalements %}
             <div class="report-card card">
                 {% if signalement.image_url %}
-                <img src="/static/uploads/images/{{ signalement.image_url }}" alt="{{ signalement.title }}" class="card-image">
+                <img src="{{ url_for('serve_image', filename=signalement.image_url) }}" alt="{{ signalement.title }}" class="card-image">
                 {% else %}
                 <img src="https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&auto=format&fit=crop&w=700&q=80" alt="{{ signalement.title }}" class="card-image">
                 {% endif %}

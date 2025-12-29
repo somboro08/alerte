@@ -154,7 +154,7 @@
                 <div class="sidebar-card card">
                     <div class="card-image-container">
                         {% if signalement.image_url %}
-                        <img src="/static/uploads/images/{{ signalement.image_url }}" alt="{{ signalement.title }}" class="sidebar-image">
+                        <img src="{{ url_for('serve_image', filename=signalement.image_url) }}" alt="{{ signalement.title }}" class="sidebar-image">
                         {% else %}
                         <div class="sidebar-image-placeholder">
                             <i class="fas fa-image"></i>

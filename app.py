@@ -63,13 +63,24 @@ def resize_and_save_image(image_stream, max_long_side, save_path, quality=85):
         return False
 
 # Configuration for file uploads
-UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'images')
+# Use persistent storage on Render, otherwise use local static folder
+if os.environ.get('RENDER'):
+    # Persistent disk is mounted at /var/data
+    UPLOAD_FOLDER = '/var/data/signal_uploads/images'
+    AVATAR_UPLOAD_FOLDER = '/var/data/signal_uploads/avatars'
+else:
+    # Local development paths
+    UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'images')
+    AVATAR_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'avatars')
+
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.config['AVATAR_UPLOAD_FOLDER'] = AVATAR_UPLOAD_FOLDER
 
-# Ensure the upload folder exists
+# Ensure the upload folders exist
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
@@ -349,23 +360,34 @@ def generer_signalement_pdf(id):
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
     qr.add_data(signalement_url)
     qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
+    img_qr = qr.make_image(fill_color="black", back_color="white")
     
-    # Encoder en Base64 pour l'intégrer dans le HTML
-    buffered = io.BytesIO()
-    img.save(buffered, format="PNG")
-    qr_code_base64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
+    # Encoder le QR code en Base64
+    buffered_qr = io.BytesIO()
+    img_qr.save(buffered_qr, format="PNG")
+    qr_code_base64 = base64.b64encode(buffered_qr.getvalue()).decode('utf-8')
     
-    # 2. Rendre le template HTML avec les données
-    # Assurez-vous que les chemins vers les CSS sont absolus ou accessibles par WeasyPrint
+    # 2. Encoder l'image du signalement en Base64 (si elle existe)
+    image_base64 = None
+    if signalement.image_url:
+        image_path = os.path.join(app.config['UPLOAD_FOLDER'], signalement.image_url)
+        try:
+            with open(image_path, "rb") as image_file:
+                image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
+        except FileNotFoundError:
+            print(f"Warning: Image file not found for PDF generation: {image_path}")
+            # image_base64 reste None, le template doit gérer ce cas
+    
+    # 3. Rendre le template HTML avec les données
     rendered_html = render_template('rapport_pdf.html', 
                                     signalement=signalement, 
-                                    qr_code_base64=qr_code_base64)
+                                    qr_code_base64=qr_code_base64,
+                                    image_base64=image_base64) # Passer l'image encodée
     
-    # 3. Générer le PDF avec WeasyPrint
+    # 4. Générer le PDF avec WeasyPrint
     pdf = HTML(string=rendered_html, base_url=request.url_root).write_pdf()
     
-    # 4. Retourner le PDF en tant que réponse
+    # 5. Retourner le PDF en tant que réponse
     return send_file(
         io.BytesIO(pdf),
         mimetype='application/pdf',
@@ -723,11 +745,6 @@ def register():
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
-    # Ensure AVATAR_UPLOAD_FOLDER exists
-    AVATAR_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'avatars')
-    os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
-    app.config['AVATAR_UPLOAD_FOLDER'] = AVATAR_UPLOAD_FOLDER
-
     if request.method == 'POST':
         if 'avatar' in request.files:
             file = request.files['avatar']
@@ -1025,6 +1042,15 @@ def internal_server_error(e):
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
+
+# ROUTES POUR SERVIR LES FICHIERS UPLOADÉS (persistent disk on Render)
+@app.route('/media/images/<path:filename>')
+def serve_image(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/media/avatars/<path:filename>')
+def serve_avatar(filename):
+    return send_from_directory(app.config['AVATAR_UPLOAD_FOLDER'], filename)
 
 # INITIALISATION
 

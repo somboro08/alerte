@@ -117,8 +117,8 @@
 
         <div class="content">
             <div class="main-info">
-                {% if signalement.image_url %}
-                    <img src="{{ url_for('static', filename='uploads/images/' ~ signalement.image_url, _external=True) }}" alt="Image de l'objet" class="item-image">
+                {% if image_base64 %}
+                    <img src="data:image/png;base64,{{ image_base64 }}" alt="Image de l'objet" class="item-image">
                 {% endif %}
                 
                 <div class="item">

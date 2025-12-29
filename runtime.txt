@@ -1,0 +1,51 @@
+python-3.9.18
+
+Bonjour,
+
+Je m’appelle korogone somboro georges. Aujourd’hui, je viens vous parler d’un projet qui me tient
+ profondément à cœur : MediLink Benin.
+
+Le constat est alarmant : au Bénin, nos patients naviguent souvent entre des structures de santé qui
+ ne communiquent pas. Les informations 
+sont fragmentées, les examens se répètent, et les ruptures de stock de médicaments sont invisibles 
+jusqu’au dernier moment. Cette fragmentation 
+coûte du temps, de l’argent, et surtout, elle met en péril la qualité des soins.
+
+Face à cela, nous ne pouvions pas rester sans agir. C’est pourquoi je porte le projet MediLink Benin.
+ Bien plus qu’une simple application, c’est
+ l’infrastructure numérique nationale qui va reconnecter les maillons de notre système de santé.
+
+Notre vision ? Simple et ambitieuse : garantir à chaque patient béninois un dossier médical unique,
+ sécurisé et accessible par tout professionnel
+ de santé autorisé, où qu’il soit.
+
+Comment ? En créant :
+
+Un Dossier Médical Universel, le pivot central de l’histoire santé du patient.
+
+Une Plateforme Collaborative qui permet enfin aux médecins, pharmacies et laboratoires de partager
+ des informations vitales, 
+dans un langage commun.
+
+Des Outils de Décision en Temps Réel pour une gestion optimale des stocks et des ressources.
+
+Et une Sécurité Maximale, avec du cryptage et un accès biométrique, pour une confiance absolue.
+
+L’impact que nous construisons ensemble est concret :
+
+Pour les patients : fini les errances, les redondances et les risques liés à un historique incomplet.
+
+Pour les soignants : retrouver du temps pour soigner, avec une vision centralisée et fiable.
+
+Pour notre système de santé national : disposer de données fiables pour prendre les bonnes décisions 
+et attirer les investissements.
+
+MediLink Benin, ce n’est pas un simple outil technologique. C’est le pont qui relie nos îles de santé
+ isolées pour en faire un continent 
+de soins cohérents et efficaces.
+
+Je suis convaincu(e) que ce projet est une clé essentielle pour l’avenir de la santé au Bénin.
+
+Je vous remercie de votre attention. »
+
+(Fin avec le même sourire et une attitude assurée)
