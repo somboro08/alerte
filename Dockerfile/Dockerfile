@@ -1,6 +1,13 @@
 # Use an official Python runtime as a parent image
 FROM python:3.9-slim-buster
 
+# Install WeasyPrint system dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpango-1.0-0 \
+    libharfbuzz0b \
+    libffi-dev \
+    shared-mime-info
+
 # Set the working directory in the container
 WORKDIR /app
 
