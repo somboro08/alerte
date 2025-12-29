@@ -105,7 +105,7 @@
                     <label for="imageUploadInput" class="image-upload-area">
                         <i class="fas fa-cloud-upload-alt"></i>
                         <span id="imageUploadText">Cliquez pour choisir un fichier ou déposez-le ici.</span>
-                        <img id="imagePreview" class="image-preview" alt="Aperçu" {% if signalement and signalement.image_url %} src="{{ url_for('serve_image', filename=signalement.image_url) }}" style="display:block;" {% endif %}>
+                        <img id="imagePreview" class="image-preview" alt="Aperçu" {% if signalement and signalement.image_url %} src="{{ signalement.image_url }}" style="display:block;" {% endif %}>
                     </label>
                     <input type="file" id="imageUploadInput" name="image" accept="image/*" style="display: none;">
                 </div>

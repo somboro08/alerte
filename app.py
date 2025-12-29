@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, send_from_directory, send_file
+from flask import Flask, render_template, jsonify, request, redirect, url_for, flash, send_file
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime, timedelta
@@ -10,12 +10,18 @@ from email.mime.multipart import MIMEMultipart
 from werkzeug.security import generate_password_hash, check_password_hash
 import qrcode
 from PIL import Image
-from PIL import Image as PILImage # Alias to avoid conflict with `Image` module name
 import io
+import requests # New import for fetching images from Cloudinary
 
 from werkzeug.utils import secure_filename
 import uuid
 from flask_wtf.csrf import generate_csrf # New import for CSRF token
+import cloudinary
+import cloudinary.uploader
+from cloudinary.utils import cloudinary_url
+from dotenv import load_dotenv
+
+load_dotenv() # Load environment variables from .env file
 
 app = Flask(__name__, 
             static_folder='static',
@@ -32,50 +38,50 @@ def nl2br(value):
 # Ajoutez le filtre à Jinja
 app.jinja_env.filters['nl2br'] = nl2br
 
-def resize_and_save_image(image_stream, max_long_side, save_path, quality=85):
-    """
-    Redimensionne et compresse une image.
-    :param image_stream: Le flux du fichier image (ex: request.files['image']).
-    :param max_long_side: La longueur maximale souhaitée pour le côté le plus long de l'image.
-    :param save_path: Le chemin complet où sauvegarder l'image.
-    :param quality: La qualité de compression pour les images JPEG (0-100).
-    :return: True si l'opération réussit, False sinon.
-    """
+# Cloudinary Configuration
+CLOUDINARY_URL = os.environ.get('CLOUDINARY_URL')
+if not CLOUDINARY_URL:
+    print("CRITICAL: CLOUDINARY_URL environment variable is not set. Cloudinary uploads will fail.")
+else:
     try:
-        img = PILImage.open(image_stream)
-        
-        # Redimensionner l'image si nécessaire
-        width, height = img.size
-        if max(width, height) > max_long_side:
-            if width > height:
-                new_width = max_long_side
-                new_height = int(max_long_side * height / width)
-            else:
-                new_height = max_long_side
-                new_width = int(max_long_side * width / height)
-            img = img.resize((new_width, new_height), PILImage.LANCZOS)
-        
-        # Sauvegarder l'image en optimisant
-        img.save(save_path, optimize=True, quality=quality)
-        return True
+        cloudinary.config(secure=True) # Configure from CLOUDINARY_URL environment variable
+        print("Cloudinary configured from CLOUDINARY_URL.")
     except Exception as e:
-        print(f"Erreur lors du redimensionnement et de la sauvegarde de l'image: {e}")
-        return False
+        print(f"CRITICAL: Error configuring Cloudinary from CLOUDINARY_URL: {e}. Check format.")
 
-# Configuration for file uploads
-# Use a directory inside the instance folder. This folder should be a mount point for a persistent disk on Render.
-UPLOAD_DIR = os.path.join(app.instance_path, 'project_uploads')
-UPLOAD_FOLDER = os.path.join(UPLOAD_DIR, 'images')
-AVATAR_UPLOAD_FOLDER = os.path.join(UPLOAD_DIR, 'avatars')
 
+def upload_to_cloudinary(file_stream, folder_name, public_id=None):
+    """
+    Uploads a file stream to Cloudinary.
+    :param file_stream: The file stream to upload (e.g., request.files['image'].stream or an in-memory BytesIO object).
+    :param folder_name: The folder in Cloudinary to upload to.
+    :param public_id: Optional public_id for the uploaded file. If None, Cloudinary generates one.
+    :return: The secure URL of the uploaded file, or None on failure.
+    """
+    if not CLOUDINARY_URL:
+        print("Cloudinary not configured. Cannot upload file.")
+        return None
+    try:
+        # If it's a file from request.files, ensure stream position is at start.
+        # If it's BytesIO, ensure position is at start.
+        if hasattr(file_stream, 'seek') and callable(file_stream.seek):
+            file_stream.seek(0)
+
+        upload_options = {
+            'folder': folder_name,
+            'resource_type': 'auto' # Automatically detect file type
+        }
+        if public_id:
+            upload_options['public_id'] = public_id
+        
+        result = cloudinary.uploader.upload(file_stream, **upload_options)
+        return result.get('secure_url')
+    except Exception as e:
+        print(f"Error uploading to Cloudinary: {e}")
+        return None
+
+# Configuration for file uploads - only allowed extensions are relevant now
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
-
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['AVATAR_UPLOAD_FOLDER'] = AVATAR_UPLOAD_FOLDER
-
-# Ensure the upload folders exist
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(AVATAR_UPLOAD_FOLDER, exist_ok=True)
 
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 
@@ -181,6 +187,10 @@ class Notification(db.Model):
     link = db.Column(db.String(255))
 
 
+
+cloudinary.config( 
+ 
+)
 # ⬇⬇⬇⬇⬇⬇⬇⬇⬇ AJOUTEZ CE CODE ICI ⬇⬇⬇⬇⬇⬇⬇⬇⬇
 # Initialisation automatique de la base de données au démarrage
 with app.app_context():
@@ -309,17 +319,13 @@ from weasyprint import HTML
 
 def generate_qrcode_for_signalement(signalement_id, url_for_qrcode):
     """
-    Génère un QR code pour le signalement et le sauvegarde.
+    Génère un QR code pour le signalement et le sauvegarde sur Cloudinary.
     :param signalement_id: L'ID du signalement.
     :param url_for_qrcode: L'URL que le QR code doit encoder.
-    :return: Le chemin relatif de l'image QR code sauvegardée, ou None en cas d'échec.
+    :return: L'URL du QR code sauvegardé sur Cloudinary, ou None en cas d'échec.
     """
     try:
-        # Créer le répertoire si inexistant
-        qr_codes_dir = os.path.join(app.root_path, 'static', 'uploads', 'qr_codes')
-        os.makedirs(qr_codes_dir, exist_ok=True)
-
-        # Générer le QR code
+        # Générer le QR code en mémoire
         qr = qrcode.QRCode(
             version=1,
             error_correction=qrcode.constants.ERROR_CORRECT_L,
@@ -330,16 +336,18 @@ def generate_qrcode_for_signalement(signalement_id, url_for_qrcode):
         qr.make(fit=True)
 
         img = qr.make_image(fill_color="black", back_color="white")
+        
+        # Sauvegarder l'image dans un buffer mémoire
+        buffered_image = io.BytesIO()
+        img.save(buffered_image, format="PNG")
+        
+        # Télécharger sur Cloudinary
+        public_id = f"qrcodes/signalement_{signalement_id}"
+        cloudinary_url = upload_to_cloudinary(buffered_image, "qrcodes", public_id)
 
-        # Chemin de sauvegarde
-        filename = f"qrcode_signalement_{signalement_id}.png"
-        filepath = os.path.join(qr_codes_dir, filename)
-        img.save(filepath)
-
-        # Retourner le chemin relatif
-        return os.path.join('uploads', 'qr_codes', filename).replace('\\', '/')
+        return cloudinary_url
     except Exception as e:
-        print(f"Erreur lors de la génération du QR code pour le signalement {signalement_id}: {e}")
+        print(f"Erreur lors de la génération et de l'upload du QR code pour le signalement {signalement_id}: {e}")
         return None
 
 @app.route('/signalement/<int:id>/generer_pdf')
@@ -350,7 +358,7 @@ def generer_signalement_pdf(id):
     """
     signalement = Signalement.query.get_or_404(id)
     
-    # 1. Générer le QR Code en mémoire
+    # 1. Générer le QR Code en mémoire (same as before)
     signalement_url = url_for('signalement_detail', id=signalement.id, _external=True)
     qr = qrcode.QRCode(version=1, box_size=10, border=5)
     qr.add_data(signalement_url)
@@ -365,12 +373,12 @@ def generer_signalement_pdf(id):
     # 2. Encoder l'image du signalement en Base64 (si elle existe)
     image_base64 = None
     if signalement.image_url:
-        image_path = os.path.join(app.config['UPLOAD_FOLDER'], signalement.image_url)
         try:
-            with open(image_path, "rb") as image_file:
-                image_base64 = base64.b64encode(image_file.read()).decode('utf-8')
-        except FileNotFoundError:
-            print(f"Warning: Image file not found for PDF generation: {image_path}")
+            response = requests.get(signalement.image_url)
+            response.raise_for_status()  # Raise an exception for HTTP errors
+            image_base64 = base64.b64encode(response.content).decode('utf-8')
+        except requests.exceptions.RequestException as e:
+            print(f"Warning: Could not fetch image from Cloudinary for PDF generation: {e}")
             # image_base64 reste None, le template doit gérer ce cas
     
     # 3. Rendre le template HTML avec les données
@@ -551,19 +559,16 @@ def nouveau_signalement():
         if 'image' in request.files:
             file = request.files['image']
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_filename = str(uuid.uuid4()) + '_' + filename
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                
-                # Redimensionner et sauvegarder l'image
-                if resize_and_save_image(file, 800, file_path): # Max 800px on longest side
-                    image_url = unique_filename # Store only the filename
+                # Upload to Cloudinary
+                uploaded_url = upload_to_cloudinary(file.stream, "signal_images")
+                if uploaded_url:
+                    image_url = uploaded_url
                 else:
-                    flash('Erreur lors du traitement de l\'image.', 'error')
+                    flash('Erreur lors de l\'upload de l\'image vers Cloudinary.', 'error')
                     return redirect(request.url)
-            elif file.filename != '': # If a file was submitted but not allowed
+            elif file.filename != '':
                 flash('Type de fichier image non autorisé.', 'error')
-                return redirect(request.url) # Redirect back to the form
+                return redirect(request.url)
         
         # Safely get lat and lng
         lat = request.form.get('lat')
@@ -585,7 +590,7 @@ def nouveau_signalement():
             contact=request.form.get('contact', current_user.email),
             reward=request.form.get('reward'),
             user_id=current_user.id,
-            image_url=image_url, # Use the generated image_url
+            image_url=image_url, # Use the Cloudinary URL
             lat=lat,
             lng=lng
         )
@@ -593,18 +598,16 @@ def nouveau_signalement():
         db.session.commit() # Commit to get the signalement.id
 
         # Generate shareable URL for the signalement
-        # We need to build the full URL, _external=True is necessary for sharing
-        # In production, app.config['SERVER_NAME'] should be set to your domain
         signalement_url = url_for('signalement_detail', id=signalement.id, _external=True)
         print(f"DEBUG: Generated Signalement URL: {signalement_url}")
 
-        # Generate and save the QR code
-        qr_code_path = generate_qrcode_for_signalement(signalement.id, signalement_url)
-        print(f"DEBUG: Generated QR Code Path: {qr_code_path}")
+        # Generate and upload the QR code to Cloudinary
+        qr_code_url = generate_qrcode_for_signalement(signalement.id, signalement_url)
+        print(f"DEBUG: Generated QR Code URL: {qr_code_url}")
 
-        if qr_code_path:
-            signalement.qr_code_url = qr_code_path
-            db.session.commit() # Commit the QR code path update
+        if qr_code_url:
+            signalement.qr_code_url = qr_code_url
+            db.session.commit() # Commit the QR code URL update
 
         flash('Signalement créé avec succès !', 'success')
         return redirect(url_for('signalement_detail', id=signalement.id))
@@ -622,16 +625,17 @@ def edit_signalement(id):
         return redirect(url_for('signalement_detail', id=signalement.id))
 
     if request.method == 'POST':
-        # Handle image upload if a new one is provided
         image_url = signalement.image_url # Keep existing image if no new one uploaded
         if 'image' in request.files:
             file = request.files['image']
             if file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_filename = str(uuid.uuid4()) + '_' + filename
-                file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
-                file.save(file_path)
-                image_url = unique_filename
+                # Upload to Cloudinary
+                uploaded_url = upload_to_cloudinary(file.stream, "signal_images")
+                if uploaded_url:
+                    image_url = uploaded_url
+                else:
+                    flash('Erreur lors de l\'upload de l\'image vers Cloudinary.', 'error')
+                    return redirect(request.url)
             elif file.filename != '':
                 flash('Type de fichier image non autorisé.', 'error')
                 return redirect(request.url)
@@ -645,7 +649,7 @@ def edit_signalement(id):
         signalement.category = request.form.get('category')
         signalement.contact = request.form.get('contact', current_user.email)
         signalement.reward = request.form.get('reward')
-        signalement.image_url = image_url # Update image_url
+        signalement.image_url = image_url # Update image_url with Cloudinary URL
         
         # Update new fields (if present in form)
         signalement.lat = request.form.get('lat', type=float)
@@ -658,9 +662,9 @@ def edit_signalement(id):
         # Re-generate QR code if data that affects the URL has changed (optional, but good practice)
         # For now, just re-generate it to ensure consistency if any detail changes.
         signalement_url = url_for('signalement_detail', id=signalement.id, _external=True)
-        qr_code_path = generate_qrcode_for_signalement(signalement.id, signalement_url)
-        if qr_code_path:
-            signalement.qr_code_url = qr_code_path
+        qr_code_url = generate_qrcode_for_signalement(signalement.id, signalement_url)
+        if qr_code_url:
+            signalement.qr_code_url = qr_code_url
         
         db.session.commit()
         flash('Signalement mis à jour avec succès !', 'success')
@@ -746,17 +750,14 @@ def profile():
             if file.filename == '':
                 flash('Aucun fichier sélectionné pour l\'avatar.', 'warning')
             elif file and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique_filename = str(uuid.uuid4()) + '_' + filename
-                file_path = os.path.join(app.config['AVATAR_UPLOAD_FOLDER'], unique_filename)
-                
-                # Redimensionner et sauvegarder l'avatar
-                if resize_and_save_image(file, 200, file_path): # Max 200px for avatar
-                    current_user.avatar_url = unique_filename
+                # Upload to Cloudinary
+                uploaded_url = upload_to_cloudinary(file.stream, "avatars", public_id=f"user_avatar_{current_user.id}")
+                if uploaded_url:
+                    current_user.avatar_url = uploaded_url
                     db.session.commit()
                     flash('Votre photo de profil a été mise à jour !', 'success')
                 else:
-                    flash('Erreur lors du traitement de l\'image de profil.', 'error')
+                    flash('Erreur lors de l\'upload de l\'image de profil vers Cloudinary.', 'error')
             else:
                 flash('Type de fichier image non autorisé pour l\'avatar.', 'error')
         
@@ -1037,15 +1038,6 @@ def internal_server_error(e):
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static', 'images'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-# ROUTES POUR SERVIR LES FICHIERS UPLOADÉS (persistent disk on Render)
-@app.route('/media/images/<path:filename>')
-def serve_image(filename):
-    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
-
-@app.route('/media/avatars/<path:filename>')
-def serve_avatar(filename):
-    return send_from_directory(app.config['AVATAR_UPLOAD_FOLDER'], filename)
 
 # INITIALISATION
 
