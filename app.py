@@ -63,15 +63,10 @@ def resize_and_save_image(image_stream, max_long_side, save_path, quality=85):
         return False
 
 # Configuration for file uploads
-# Use persistent storage on Render, otherwise use local static folder
-if os.environ.get('RENDER'):
-    # Persistent disk is mounted at /var/data
-    UPLOAD_FOLDER = '/var/data/signal_uploads/images'
-    AVATAR_UPLOAD_FOLDER = '/var/data/signal_uploads/avatars'
-else:
-    # Local development paths
-    UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'images')
-    AVATAR_UPLOAD_FOLDER = os.path.join(app.root_path, 'static', 'uploads', 'avatars')
+# Use a directory inside the instance folder. This folder should be a mount point for a persistent disk on Render.
+UPLOAD_DIR = os.path.join(app.instance_path, 'project_uploads')
+UPLOAD_FOLDER = os.path.join(UPLOAD_DIR, 'images')
+AVATAR_UPLOAD_FOLDER = os.path.join(UPLOAD_DIR, 'avatars')
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 

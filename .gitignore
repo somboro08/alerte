@@ -26,6 +26,7 @@ Thumbs.db
 
 # Uploaded media
 /static/uploads/
+/project_uploads/
 
 # Ruff cache
 .ruff_cache/
